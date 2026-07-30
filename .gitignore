@@ -1,0 +1,30 @@
+# Credentials -- never commit these
+*cookie*
+*.cookies
+.env
+.env.*
+!.env.example
+
+# Local runtime state and downloads
+/downloads/
+/work/
+state/*.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.DS_Store
+.idea/
+*.swp

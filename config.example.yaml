@@ -1,0 +1,131 @@
+# MediaBridge configuration.
+#
+# Copy to config.yaml and edit. Any ${VAR} is replaced from the environment;
+# a variable that is not set is left as the literal ${VAR} so the failure is
+# loud rather than silent.
+
+version: 1
+
+acfun:
+  # The name of the environment variable holding the cookie blob, not the
+  # blob itself. Never put credentials in this file.
+  cookie_env: ACFUN_COOKIE
+  # Local fallback, used only when the environment variable is absent.
+  cookie_file: ~/.mediabridge/ac_cookie.txt
+
+limits:
+  # GitHub-hosted runners only guarantee about 14 GB of free disk.
+  max_filesize_mb: 2000
+  max_duration_sec: 3600
+  min_duration_sec: 30
+  # Publishing a handful per run keeps the account below AcFun's rate limits
+  # and keeps a bad configuration from flooding your channel.
+  max_items_per_run: 2
+  max_items_per_source: 1
+
+state_file: state/published.json
+work_dir: work
+
+sources:
+  - name: blender-open-movies
+    type: peertube
+    enabled: true
+    options:
+      host: video.blender.org
+      channel: blender_open_movies
+      # PeerTube licence enum: 1=BY 2=BY-SA 3=BY-ND 4=BY-NC 5=BY-NC-SA
+      # 6=BY-NC-ND 7=CC0 8=no known restrictions 9=all rights reserved
+      licence_allow: [1, 2, 3, 7, 8]
+      limit: 5
+    publish:
+      # Run `mediabridge channels` to list valid IDs.
+      channel_id: 190          # 动画 > 短片·手书·配音
+      creation_type: 1         # 1 = 转载, 3 = 原创
+      tags: [Blender, 开源动画, 搬运]
+      title_template: "【搬运】{title}"
+      desc_template: |
+        {description}
+
+        ――――――――――
+        本作品为转载，版权归原作者所有。
+        原作者：{author}
+        原始链接：{webpage_url}
+        许可协议：{license}
+        由 MediaBridge 自动搬运。
+
+  - name: nasa-video
+    type: nasa
+    enabled: false
+    options:
+      search: artemis
+      quality: large           # mobile | small | medium | large | orig
+      limit: 3
+    publish:
+      channel_id: 86           # 科技 > 科普
+      creation_type: 1
+      tags: [NASA, 航天, 搬运]
+      title_template: "【NASA】{title}"
+
+  - name: internet-archive
+    type: archive_org
+    enabled: false
+    options:
+      collection: prelinger
+      # Keep this on. Most Archive items carry no licence metadata at all.
+      require_license: true
+      license_allow: [public-domain, attribution]
+      prefer: smallest         # smallest | largest
+      limit: 3
+    publish:
+      channel_id: 184
+      creation_type: 1
+      tags: [公有领域, 老片, 搬运]
+
+  - name: wikimedia-commons
+    type: wikimedia
+    enabled: false
+    options:
+      search: nasa spacecraft
+      license_allow: [public-domain, attribution]
+      limit: 3
+    publish:
+      channel_id: 86
+      creation_type: 1
+      tags: [科普, 搬运]
+
+  # Article channel (AcFun 专栏) rather than video. Horizon publishes one
+  # AI-scored news digest per day; min_score trims a 70-item digest down to
+  # something readable.
+  #
+  # Left disabled on purpose: a digest summarises third-party reporting, so you
+  # have to decide whether you may repost it and say so in license_name. The
+  # source refuses to run until you do.
+  - name: horizon-daily
+    type: horizon
+    enabled: false
+    options:
+      lang: zh                   # zh | en
+      min_score: 8.0             # Horizon itself only publishes >= 7.0
+      max_entries: 12
+      # Reposts are moderated. A digest whose geopolitics section covered an
+      # FSB terrorism accusation was rejected with `result=11`; the same digest
+      # without that section was accepted. Narrow the categories if you hit it.
+      categories: [tech, papers]
+      include_context: true
+      include_references: false
+      license_name: ""           # required; e.g. "原文各条目均注明来源"
+      cover_url: https://sayakawaii.github.io/Horizon/assets/overview_zh.png
+    publish:
+      target: acfun_article      # articles need a realm as well as a channel
+      channel_id: 110            # 资讯
+      realm_id: 28               # 新闻资讯
+      creation_type: 1
+      tags: [科技, 资讯, 搬运]
+      title_template: "{title}"
+      desc_template: |
+        {description}
+
+        ――――――――――
+        本文为转载，内容由 Horizon 自动生成。
+        原始链接：{webpage_url}
+        由 MediaBridge 自动搬运。

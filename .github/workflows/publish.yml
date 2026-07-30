@@ -1,0 +1,109 @@
+name: Publish to AcFun
+
+on:
+  schedule:
+    # 02:30 UTC daily = 10:30 China time. Avoids the top of the hour, when
+    # GitHub's scheduler is most congested and jobs are delayed.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would be published without submitting anything"
+        type: boolean
+        default: true
+      source:
+        description: "Only run this source (leave blank for all enabled)"
+        type: string
+        default: ""
+      max_items:
+        description: "Override limits.max_items_per_run"
+        type: string
+        default: ""
+
+# Two runs writing state/published.json at once would lose one side's updates.
+concurrency:
+  group: mediabridge-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Install MediaBridge
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Report free disk
+        run: df -h / | tail -1
+
+      # Fails the job in seconds rather than after downloading gigabytes that
+      # could never have been uploaded.
+      - name: Check AcFun session
+        env:
+          ACFUN_COOKIE: ${{ secrets.ACFUN_COOKIE }}
+        run: mediabridge login-check
+
+      - name: Run
+        id: run
+        env:
+          ACFUN_COOKIE: ${{ secrets.ACFUN_COOKIE }}
+          # Passed as environment variables rather than interpolated into the
+          # script body, so a crafted input cannot inject shell commands.
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_SOURCE: ${{ inputs.source }}
+          INPUT_MAX_ITEMS: ${{ inputs.max_items }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${INPUT_DRY_RUN:-}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          if [ -n "${INPUT_SOURCE:-}" ]; then
+            args+=(--source "$INPUT_SOURCE")
+          fi
+          if [ -n "${INPUT_MAX_ITEMS:-}" ]; then
+            args+=(--max-items "$INPUT_MAX_ITEMS")
+          fi
+          echo "running: mediabridge run ${args[*]-}"
+          mediabridge run ${args[@]+"${args[@]}"}
+
+      - name: Commit the dedup ledger
+        # Runs even when publishing partly failed, so successfully published
+        # items are never re-published on the next run.
+        if: always() && inputs.dry_run != true
+        run: |
+          mkdir -p state
+          if [ -z "$(git status --porcelain -- state/)" ]; then
+            echo "No state changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state/
+          git commit -m "chore(state): record published items [skip ci]"
+          # The concurrency group prevents overlap, but a human push during the
+          # run would still cause a rejection; rebasing is cheap insurance.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Report free disk after run
+        if: always()
+        run: df -h / | tail -1

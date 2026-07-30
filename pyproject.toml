@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mediabridge"
+version = "0.1.0"
+description = "Automatically repost openly-licensed videos and articles to AcFun, driven by GitHub Actions."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "MediaBridge contributors" }]
+keywords = ["acfun", "yt-dlp", "peertube", "creative-commons", "automation"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+dependencies = [
+    "requests>=2.31",
+    "pydantic>=2.0",
+    "PyYAML>=6.0",
+    "yt-dlp>=2024.1.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/sayakawaii/MediaBridge"
+
+[project.scripts]
+mediabridge = "mediabridge.cli:main"
+
+# Built-in sources are registered through the same entry-point group that
+# third-party plugins use, so an external package is never a second-class
+# citizen. See docs/EXTENDING.md.
+[project.entry-points."mediabridge.sources"]
+peertube = "mediabridge.sources.peertube:PeerTubeSource"
+archive_org = "mediabridge.sources.archive_org:ArchiveOrgSource"
+wikimedia = "mediabridge.sources.wikimedia:WikimediaSource"
+nasa = "mediabridge.sources.nasa:NasaSource"
+horizon = "mediabridge.sources.horizon:HorizonSource"
+
+[project.entry-points."mediabridge.publishers"]
+acfun_video = "mediabridge.publishers.acfun.video:AcFunVideoPublisher"
+acfun_article = "mediabridge.publishers.acfun.article:AcFunArticlePublisher"
+
+[tool.setuptools.packages.find]
+include = ["mediabridge*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
