@@ -1,5 +1,12 @@
 {
   "published": {
+    "blender-open-movies:3eb93cab-79a2-4fd5-a636-d42e5c59ddea": {
+      "published_at": "2026-07-30T08:32:06+00:00",
+      "remote_id": "48736055",
+      "remote_url": "https://www.acfun.cn/v/ac48736055",
+      "source_url": "https://video.blender.org/w/8KerEHuf8qyGtCVoAoEdzQ",
+      "title": "【搬运】HERO – Blender Grease Pencil Showcase"
+    },
     "horizon-daily:https://sayakawaii.github.io/Horizon/2026/07/29/summary-zh.html": {
       "published_at": "2026-07-30T07:42:37+00:00",
       "refreshed_at": "2026-07-30T08:03:18+00:00",
@@ -9,6 +16,6 @@
       "title": "Horizon 每日简报 2026-07-29"
     }
   },
-  "updated_at": "2026-07-30T08:03:18+00:00",
+  "updated_at": "2026-07-30T08:32:06+00:00",
   "version": 1
 }
