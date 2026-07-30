@@ -36,6 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Checked before the toolchain is installed: a missing config would
+      # otherwise surface ninety seconds later, buried in the login-check step.
+      - name: Check for config.yaml
+        run: |
+          if [ ! -f config.yaml ]; then
+            echo "::error::config.yaml is missing. The workflow reads config.yaml, but only" \
+                 "config.example.yaml is in the repository. Run 'cp config.example.yaml config.yaml'," \
+                 "edit it, and commit it. See the Quick start in README.md."
+            exit 1
+          fi
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

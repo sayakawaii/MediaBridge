@@ -27,31 +27,79 @@ flowchart LR
 
 ## Quick start
 
-1. **Fork this repository.**
+### 1. Fork this repository
 
-2. **Export your AcFun cookies** and save them as a repository secret named `ACFUN_COOKIE`. See [docs/COOKIES.md](docs/COOKIES.md) — it takes about a minute and both common export formats are accepted.
+### 2. Add your AcFun session as a repository secret
 
-3. **Write a config.** Copy the example and edit it:
+This is the only credential the workflow needs.
+
+Go to **Settings → Secrets and variables → Actions → New repository secret**. It is under the *Security* heading in the left sidebar — **not** *Deploy keys*, which holds SSH keys for Git access and is never read by a workflow.
+
+| Field | Value |
+| --- | --- |
+| **Name** | `ACFUN_COOKIE` (exactly; the workflow reads `secrets.ACFUN_COOKIE`) |
+| **Secret** | your cookie text, see below |
+
+Export the cookies from a browser where you are signed in to AcFun — [docs/COOKIES.md](docs/COOKIES.md) has both methods, and the parser accepts a Set-Cookie dump or Cookie-Editor JSON without being told which. Only two cookies actually matter, so paste just these rather than the whole export:
+
+```
+acPasstoken=<value>;Domain=acfun.cn;Path=/;Expires=<date>
+auth_key=<value>;Domain=acfun.cn;Path=/;Expires=<date>
+```
+
+Keep the `Expires` attribute: it is what `login-check` uses to warn you before the session lapses. Everything else in a typical export is analytics (`Hm_lvt_*`, `Hm_lpvt_*`, `HMACCOUNT`) — MediaBridge discards those anyway, and they encode your browsing history, so there is no reason to put them in a secret store.
+
+> `acPasstoken` is equivalent to full control of the account. GitHub hides a secret once saved, and MediaBridge redacts upload tokens from its logs, but on a public repository the Actions log is public — keep that in mind if you add debug output.
+
+### 3. Create `config.yaml` and commit it
+
+**The workflow reads `config.yaml`, which is deliberately not in the repository** — only `config.example.yaml` is. A scheduled run without it fails immediately with `Config file not found`.
 
 ```bash
 cp config.example.yaml config.yaml
+# edit it, then:
+git add config.yaml && git commit -m "Add my MediaBridge config" && git push
 ```
 
-4. **Find the partition ID** you want to publish into:
+Every source in the example is disabled except `blender-open-movies`, so review which ones you actually want before pushing.
+
+### 4. Find the partition you want to publish into
 
 ```bash
 pip install -e .
-mediabridge channels
+mediabridge channels             # video partitions -> publish.channel_id
+mediabridge channels --articles  # article realms   -> publish.realm_id
 ```
 
-5. **Rehearse before going live:**
+### 5. Rehearse before going live
 
 ```bash
 mediabridge login-check          # is the session valid, and for how long?
+mediabridge check-config         # does every source and target resolve?
 mediabridge run --dry-run        # what would be published?
 ```
 
-6. **Enable the workflow.** `Actions` → `Publish to AcFun` → `Run workflow`. Leave `dry_run` checked for the first manual run; the scheduled run at 02:30 UTC publishes for real.
+### 6. Enable the workflow
+
+`Actions` → `Publish to AcFun` → `Run workflow`. `dry_run` is checked by default for manual runs, so the first one is safe.
+
+## When it runs
+
+```yaml
+schedule:
+  - cron: "30 2 * * *"
+```
+
+**02:30 UTC every day, which is 10:30 China time.** Cron in GitHub Actions is always UTC and ignores your repository's locale.
+
+The schedule became active the moment the workflow landed on the default branch; there is nothing to switch on. A few things about it are worth knowing:
+
+- **A scheduled run publishes for real.** The `dry_run` default of `true` applies only to manual runs — the `inputs` context does not exist for a `schedule` event, so the flag is absent and the run submits. This is intended, but it means the first scheduled run after you push is live.
+- **GitHub's scheduler is best-effort.** Runs are queued, not guaranteed on the minute, and are delayed or dropped entirely under load. `30` rather than `00` avoids the worst of the congestion at the top of the hour. Treat a missed day as normal; the dedup ledger means the next run simply picks up what was missed.
+- **Only the default branch is scheduled.** Editing the cron on a feature branch changes nothing until it merges.
+- **GitHub disables schedules on repositories that have been inactive for 60 days**, and emails the owner first. This workflow commits the ledger back after each publishing run, which keeps the repository active.
+
+To change the time, edit the cron and remember to convert: China time minus 8 hours. `"0 14 * * *"` would be 22:00 China time.
 
 ## Commands
 
