@@ -7,6 +7,13 @@
       "source_url": "https://video.blender.org/w/4pSeQCu9XXz9wWMh5gTNMf",
       "title": "SINGULARITY - Painterly Space Adventure"
     },
+    "blender-open-movies:3d95fb3d-c866-42c8-9db1-fe82f48ccb95": {
+      "published_at": "2026-08-01T03:46:38+00:00",
+      "remote_id": "48741262",
+      "remote_url": "https://www.acfun.cn/v/ac48741262",
+      "source_url": "https://video.blender.org/w/8B5QmoLSS3mWJ4fmZZu3Ye",
+      "title": "Spring - Blender Open Movie"
+    },
     "blender-open-movies:3eb93cab-79a2-4fd5-a636-d42e5c59ddea": {
       "published_at": "2026-07-30T08:32:06+00:00",
       "remote_id": "48736055",
@@ -28,8 +35,15 @@
       "remote_url": "https://www.acfun.cn/a/ac48738422",
       "source_url": "https://sayakawaii.github.io/Horizon/2026/07/30/summary-zh.html",
       "title": "Horizon 每日简报 2026-07-30"
+    },
+    "horizon-daily:https://sayakawaii.github.io/Horizon/2026/07/31/summary-zh.html": {
+      "published_at": "2026-08-01T03:46:46+00:00",
+      "remote_id": "48741265",
+      "remote_url": "https://www.acfun.cn/a/ac48741265",
+      "source_url": "https://sayakawaii.github.io/Horizon/2026/07/31/summary-zh.html",
+      "title": "Horizon 每日简报 2026-07-31"
     }
   },
-  "updated_at": "2026-07-31T03:48:41+00:00",
+  "updated_at": "2026-08-01T03:46:46+00:00",
   "version": 1
 }
