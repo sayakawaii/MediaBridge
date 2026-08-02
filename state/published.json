@@ -21,6 +21,13 @@
       "source_url": "https://video.blender.org/w/8KerEHuf8qyGtCVoAoEdzQ",
       "title": "【搬运】HERO – Blender Grease Pencil Showcase"
     },
+    "blender-open-movies:6402b77c-b61f-4a06-96ca-c8420a2becf4": {
+      "published_at": "2026-08-02T03:48:12+00:00",
+      "remote_id": "48743408",
+      "remote_url": "https://www.acfun.cn/v/ac48743408",
+      "source_url": "https://video.blender.org/w/dmhvQNzwBnrWy1iYzVv5g7",
+      "title": "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film"
+    },
     "horizon-daily:https://sayakawaii.github.io/Horizon/2026/07/29/summary-zh.html": {
       "published_at": "2026-07-30T07:42:37+00:00",
       "refreshed_at": "2026-07-30T08:03:18+00:00",
@@ -42,8 +49,15 @@
       "remote_url": "https://www.acfun.cn/a/ac48741265",
       "source_url": "https://sayakawaii.github.io/Horizon/2026/07/31/summary-zh.html",
       "title": "Horizon 每日简报 2026-07-31"
+    },
+    "horizon-daily:https://sayakawaii.github.io/Horizon/2026/08/01/summary-zh.html": {
+      "published_at": "2026-08-02T03:48:17+00:00",
+      "remote_id": "48743409",
+      "remote_url": "https://www.acfun.cn/a/ac48743409",
+      "source_url": "https://sayakawaii.github.io/Horizon/2026/08/01/summary-zh.html",
+      "title": "Horizon 每日简报 2026-08-01"
     }
   },
-  "updated_at": "2026-08-01T03:46:46+00:00",
+  "updated_at": "2026-08-02T03:48:17+00:00",
   "version": 1
 }
