@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from pathlib import Path
 
 from ...errors import PublishError, SkipItem
@@ -118,6 +119,51 @@ def upload_video_file(client: AcFunClient, video_path: Path) -> str:
     return str(video_id)
 
 
+#: ``videoList[].sourceStatus`` in ``getDougaInfo``, per the creation centre's
+#: own bundle. Transcoding runs after submission, so a douga id in hand says
+#: nothing about whether the video will ever play.
+SOURCE_STATUS = {1: "转码中", 2: "转码失败", 3: "审核中", 4: "已退回", 5: "已上线", 6: "时长超限"}
+TRANSCODE_FAILED = 2
+
+VERIFY_TIMEOUT_SEC = 240
+VERIFY_INTERVAL_SEC = 15
+
+
+def verify_transcode(client: AcFunClient, douga_id: str) -> str:
+    """Watch a fresh submission until it leaves the pre-transcode state.
+
+    ``createDouga`` returns an id for a video AcFun cannot decode just as
+    readily as for one it can, so without this a broken upload looks exactly
+    like a good one until somebody opens the page days later.
+    """
+    deadline = time.monotonic() + VERIFY_TIMEOUT_SEC
+    status = None
+    while time.monotonic() < deadline:
+        try:
+            info = client.post_form("/video/api/getDougaInfo", {"dougaId": str(douga_id)})
+        except PublishError as exc:  # a lost poll must not fail a good submission
+            log.debug("Could not read back ac%s: %s", douga_id, exc)
+            return "unknown"
+
+        videos = info.get("videoList") or []
+        status = videos[0].get("sourceStatus") if videos else None
+        # 2 is also where a submission sits before transcoding picks it up, so
+        # only a lasting 2 means failure -- hence waiting rather than sampling.
+        if status is not None and status != TRANSCODE_FAILED:
+            log.info("ac%s transcoded: %s", douga_id, SOURCE_STATUS.get(status, status))
+            return SOURCE_STATUS.get(status, str(status))
+        time.sleep(VERIFY_INTERVAL_SEC)
+
+    log.error(
+        "ac%s is still '%s' after %ds. The submission exists but the video will not play; "
+        "check the upload before trusting later runs.",
+        douga_id,
+        SOURCE_STATUS.get(status, status),
+        VERIFY_TIMEOUT_SEC,
+    )
+    return SOURCE_STATUS.get(status, str(status))
+
+
 def _report_failure(client: AcFunClient, task_id: str, exc: Exception) -> None:
     """Best-effort failure telemetry so AcFun can release the pending task."""
     try:
@@ -216,4 +262,7 @@ class AcFunVideoPublisher(Publisher):
 
         url = f"https://www.acfun.cn/v/ac{douga_id}"
         log.info("Published: %s -> %s", fields["title"], url)
-        return PublishResult(ok=True, remote_id=str(douga_id), url=url, message="submitted for review")
+        outcome = verify_transcode(client, str(douga_id))
+        return PublishResult(
+            ok=True, remote_id=str(douga_id), url=url, message=f"submitted for review ({outcome})"
+        )

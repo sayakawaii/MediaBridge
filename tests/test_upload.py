@@ -12,6 +12,7 @@ from mediabridge.publishers.acfun.upload import (
     _upload_fragment,
     _upload_user_agent,
 )
+from mediabridge.publishers.acfun.video import verify_transcode
 
 
 def test_redacts_upload_tokens_from_urls():
@@ -92,3 +93,17 @@ def test_fragments_are_numbered_with_the_snake_case_parameters():
     )
     assert sent["params"] == {"fragment_id": "3", "upload_token": "tok"}
     assert "python-requests/" not in sent["headers"]["User-Agent"]
+
+
+def test_a_lasting_transcode_failure_is_reported(monkeypatch, caplog):
+    monkeypatch.setattr("mediabridge.publishers.acfun.video.time.sleep", lambda _s: None)
+    monkeypatch.setattr("mediabridge.publishers.acfun.video.VERIFY_TIMEOUT_SEC", 0.01)
+    client = SimpleNamespace(post_form=lambda *a, **k: {"videoList": [{"sourceStatus": 2}]})
+    with caplog.at_level("ERROR"):
+        assert verify_transcode(client, "123") == "转码失败"
+    assert "will not play" in caplog.text
+
+
+def test_a_video_that_starts_transcoding_is_accepted():
+    client = SimpleNamespace(post_form=lambda *a, **k: {"videoList": [{"sourceStatus": 3}]})
+    assert verify_transcode(client, "123") == "审核中"
