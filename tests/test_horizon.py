@@ -25,12 +25,15 @@ DIGEST_HTML = """
   <details class="hz-item" data-score="9.0">
     <summary><span class="hz-item-title">High scoring item</span>
       <span class="hz-item-score">⭐️ 9.0/10</span></summary>
-    <p>Body of the high scoring item.</p>
-    <p>🔗 <a href="https://example.com/high">来源</a></p>
+    <p>Body of the high scoring item。 第二段说明其意义。 第三段给出细节。</p>
+    <p>🔗 <a href="https://example.com/high#atom-everything">来源</a></p>
+    <p>hackernews · someone · 8月1日 17:56 · <a href="https://news.ycombinator.com/item?id=1">社区讨论</a></p>
     <p><strong>背景</strong>: Context for the high item.</p>
     <details><summary>参考链接</summary>
       <ul><li><a href="https://ref.example.com/a">Reference A</a></li></ul>
     </details>
+    <p><strong>社区讨论</strong>: What people said.</p>
+    <p><strong>标签</strong>: <code>#alpha</code>, <code>#beta</code></p>
   </details>
   <details class="hz-item" data-score="7.0">
     <summary><span class="hz-item-title">Low scoring item</span>
@@ -114,7 +117,45 @@ def test_section_heading_loses_its_item_count():
 
 def test_scores_are_rendered_without_emoji():
     body = build(min_score=8.0).discover()[0].body_html
-    assert "<h3>High scoring item（9.0/10）</h3>" in body
+    assert "<h3>1. High scoring item（9.0）</h3>" in body
+    assert "⭐" not in body
+
+
+def test_a_joined_body_is_split_back_into_paragraphs():
+    # Horizon runs summary, significance and detail together in one <p>,
+    # separated only by a space after the full stop.
+    body = build(min_score=8.0).discover()[0].body_html
+    assert "<p>Body of the high scoring item。</p>" in body
+    assert "<p>第二段说明其意义。</p>" in body
+    assert "<p>第三段给出细节。</p>" in body
+
+
+def test_entries_are_separated_by_a_rule():
+    body = build(min_score=0.0).discover()[0].body_html
+    # A rule goes between entries in the same category, but not directly
+    # after a category heading, which already separates them.
+    assert "</h2><hr/>" not in body
+    assert body.count("<hr/>") == 2  # after the intro, and between the two tech items
+
+
+def test_the_attribution_line_merges_byline_and_url():
+    body = build(min_score=8.0).discover()[0].body_html
+    assert "<p>来源：hackernews · someone · 8月1日 17:56 · https://example.com/high</p>" in body
+
+
+def test_feed_fragments_are_stripped_from_source_urls():
+    assert "#atom-everything" not in build(min_score=8.0).discover()[0].body_html
+
+
+def test_the_discussion_thread_url_moves_to_the_discussion_paragraph():
+    # Left on the byline it would lose its href and read as a dead "社区讨论".
+    body = build(min_score=8.0).discover()[0].body_html
+    assert "<strong>社区讨论</strong>：What people said. https://news.ycombinator.com/item?id=1</p>" in body
+
+
+def test_the_hashtag_line_is_dropped_by_default():
+    assert "#alpha" not in build(min_score=8.0).discover()[0].body_html
+    assert "#alpha" in build(min_score=8.0, include_tags=True).discover()[0].body_html
 
 
 def test_nested_reference_details_does_not_end_the_item():

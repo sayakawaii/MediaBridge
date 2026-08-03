@@ -5,8 +5,9 @@ web bundle (``member.acfun.cn`` webpack chunks) and verified against the live
 service. Two details differ from the long-abandoned ``acfun_upload`` PyPI
 package and silently break it:
 
-* the chunked upload parameters are camelCase (``fragmentId`` /
-  ``fragmentCount``), not snake_case;
+* the chunked upload gateway answers a ``python-requests`` User-Agent with an
+  empty 200 for anything at all, storing nothing, so uploads must go out under
+  the browser User-Agent and have their acknowledgement checked;
 * covers no longer go to Qiniu. ``getQiniuToken`` keeps its legacy name but
   returns a Kuaishou endpoint list.
 """

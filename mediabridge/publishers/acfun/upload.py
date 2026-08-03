@@ -30,19 +30,15 @@ MAX_FRAGMENT_ATTEMPTS = 4
 def _upload_user_agent() -> str:
     """User-Agent for the Kuaishou upload gateway.
 
-    The gateway routes on User-Agent, and a browser-like string sends the
-    request down a path that rejects it with the thoroughly misleading
-    ``Required String parameter 'upload_token' is not present`` -- even though
-    the parameters exactly match what AcFun's own web client sends. Strings
-    containing ``python-requests/<version>`` are accepted; browser, curl,
-    okhttp and bare urllib3 strings are not.
-
-    So we keep requests' own token in the string and prepend our identity,
-    rather than sending the browser User-Agent used for the member API.
+    A ``python-requests/<version>`` string routes to a handler that answers
+    every request with an empty 200 -- including ones whose parameters are
+    plainly wrong -- and stores nothing. It looks like success and silently
+    discards the file, so send the browser string the web client uses.
     """
-    from ... import __version__
-
-    return f"MediaBridge/{__version__} {requests.utils.default_user_agent()}"
+    return (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    )
 
 
 def _redact(message: str) -> str:
@@ -52,6 +48,25 @@ def _redact(message: str) -> str:
     live credential. Actions logs are public on public repositories.
     """
     return re.sub(r"(uploadToken|upload_token)=[^&\s'\"]+", r"\1=<redacted>", str(message))
+
+
+def _require_ack(response: requests.Response, what: str) -> dict:
+    """Parse a gateway reply, insisting it actually acknowledged the write.
+
+    A successful reply is ``{"result": 1, ...}``. An empty body is not
+    success: it is what the gateway returns when the request never reached
+    the storage path at all, and treating it as success is what let a run of
+    uploads report completion while sending the file nowhere.
+    """
+    if not response.content:
+        raise PublishError(f"{what}: gateway returned an empty body instead of an acknowledgement")
+
+    body = response.json()
+    if not isinstance(body, dict):
+        raise PublishError(f"{what}: unexpected gateway reply {str(body)[:120]}")
+    if body.get("result") != 1:
+        raise PublishError(f"{what}: gateway rejected the write: {str(body)[:200]}")
+    return body
 
 
 def _endpoint_url(host: str, path: str) -> str:
@@ -74,11 +89,9 @@ def _upload_fragment(
 ) -> None:
     headers = {
         "Content-Type": "application/octet-stream",
-        # The Kuaishou endpoint validates this against the declared file size.
-        "Content-Range": f"bytes {start}-{start + len(payload) - 1}/{total_size}",
         "User-Agent": _upload_user_agent(),
     }
-    params = {"fragmentId": str(index), "uploadToken": upload_token}
+    params = {"fragment_id": str(index), "upload_token": upload_token}
     url = _endpoint_url(host, FRAGMENT_PATH)
 
     last_error = ""
@@ -86,13 +99,18 @@ def _upload_fragment(
         try:
             response = session.post(url, params=params, data=payload, headers=headers, timeout=timeout)
             if response.status_code == 200:
-                body = response.json() if response.content else {}
-                if not isinstance(body, dict) or body.get("result", 1) == 1:
+                body = _require_ack(response, f"Fragment {index}")
+                # The gateway echoes what it stored. Comparing it against what
+                # we sent is the only way to notice a fragment that was
+                # accepted but truncated.
+                stored = body.get("size")
+                if stored is not None and int(stored) != len(payload):
+                    last_error = f"gateway stored {stored} bytes of {len(payload)}"
+                else:
                     return
-                last_error = f"result={body.get('result')} {body.get('error_msg', '')}"
             else:
                 last_error = f"HTTP {response.status_code}: {response.text[:160]}"
-        except (requests.RequestException, ValueError) as exc:
+        except (requests.RequestException, ValueError, PublishError) as exc:
             last_error = str(exc)
 
         last_error = _redact(last_error)
@@ -200,7 +218,7 @@ def _complete(
     timeout: int,
 ) -> None:
     url = _endpoint_url(host, COMPLETE_PATH)
-    params = {"fragmentCount": str(fragment_count), "uploadToken": upload_token}
+    params = {"fragment_count": str(fragment_count), "upload_token": upload_token}
     try:
         response = session.post(
             url, params=params, headers={"User-Agent": _upload_user_agent()}, timeout=timeout
@@ -211,10 +229,4 @@ def _complete(
     if response.status_code != 200:
         raise PublishError(f"Upload completion failed: HTTP {response.status_code} {response.text[:200]}")
 
-    try:
-        body = response.json()
-    except ValueError:
-        return  # An empty 200 is success for this endpoint.
-
-    if isinstance(body, dict) and body.get("result", 1) != 1:
-        raise PublishError(f"Upload completion rejected: {body}")
+    _require_ack(response, "Upload completion")

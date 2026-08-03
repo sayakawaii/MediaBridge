@@ -78,6 +78,9 @@ class HorizonOptions(SourceOptions):
     include_references: bool = False
     """Keep the nested reference-link list. Verbose; off by default."""
 
+    include_tags: bool = False
+    """Keep the per-item hashtag line. Mostly noise once reposted; off by default."""
+
     license_name: str = ""
     """Required. How the digest is licensed, as you have determined it."""
 
@@ -255,22 +258,52 @@ class HorizonSource(Source):
         parts.append("<hr/>")
 
         current_category = ""
-        for entry_item in selected:
+        for number, entry_item in enumerate(selected, 1):
             if entry_item.category and entry_item.category != current_category:
                 current_category = entry_item.category
                 parts.append(f"<h2>{escape(entry_item.category)}</h2>")
+            elif number > 1:
+                # AcFun keeps <hr>, and without one every entry runs into the
+                # next as an unbroken column of paragraphs.
+                parts.append("<hr/>")
 
             # No "⭐️" here: AcFun deletes emoji server-side, so the marker
             # would arrive as a stray space.
-            score = f"（{entry_item.score:.1f}/10）" if zh else f" [{entry_item.score:.1f}/10]"
-            parts.append(f"<h3>{escape(entry_item.title)}{score}</h3>")
-            parts.append(entry_item.summary_html)
-            if self.options.include_context and entry_item.context_html:
-                parts.append(entry_item.context_html)
-            if self.options.include_references and entry_item.references_html:
-                parts.append(entry_item.references_html)
+            score = f"（{entry_item.score:.1f}）" if zh else f" [{entry_item.score:.1f}]"
+            parts.append(f"<h3>{number}. {escape(entry_item.title)}{score}</h3>")
+            parts.extend(self._render_entry(entry_item, zh))
 
         return flatten_for_acfun("".join(parts))
+
+    def _render_entry(self, entry_item: DigestItem, zh: bool) -> list[str]:
+        found = entry_item.classified()
+        parts: list[str] = []
+
+        for para in found["body"]:
+            for chunk in _JOINED_SENTENCES.split(para):
+                if chunk.strip():
+                    parts.append(f"<p>{chunk.strip()}</p>")
+
+        if self.options.include_context and found["context"]:
+            label = "背景" if zh else "Context"
+            parts.append(f"<p><strong>{label}</strong>：{found['context']}</p>")
+        if found["discussion"]:
+            label = "社区讨论" if zh else "Discussion"
+            thread = f" {escape(found['discussion_url'])}" if found["discussion_url"] else ""
+            parts.append(f"<p><strong>{label}</strong>：{found['discussion']}{thread}</p>")
+        if self.options.include_tags and found["tags"]:
+            label = "标签" if zh else "Tags"
+            parts.append(f"<p><strong>{label}</strong>：{found['tags']}</p>")
+
+        # One attribution line rather than a bare URL stranded on its own:
+        # anchors do not survive AcFun, so the URL has to be visible text.
+        trail = " · ".join(x for x in (found["byline"], found["url"]) if x)
+        if trail:
+            parts.append(f"<p>{'来源' if zh else 'Source'}：{escape(trail)}</p>")
+
+        if self.options.include_references and entry_item.references_html:
+            parts.append(entry_item.references_html)
+        return parts
 
 
 # ---------------------------------------------------------------------------
@@ -301,6 +334,53 @@ class DigestItem:
         match = _CONTEXT_PARA.search(_NESTED_DETAILS.sub("", self.html))
         return match.group(0) if match else ""
 
+    def classified(self) -> dict:
+        """Sort the entry's paragraphs into the roles Horizon gives them.
+
+        The digest emits body, source link, byline, context, discussion and
+        tags as a flat run of sibling ``<p>``s. Reposting them in that order
+        produces a wall of same-weight text, so each is picked out by its
+        marker and laid out deliberately by the renderer.
+        """
+        html = _NESTED_DETAILS.sub("", self.html)
+        html = _SUMMARY_EL.sub("", html)
+        html = _OUTER_DETAILS.sub("", html)
+
+        found: dict = {
+            "body": [], "url": "", "byline": "", "discussion_url": "",
+            "context": "", "discussion": "", "tags": "",
+        }
+        for para in _PARA.findall(html):
+            source = _SOURCE_ANCHOR.search(para)
+            if source:
+                found["url"] = _clean_url(source.group(1))
+                continue
+            label = _LABELLED.match(para.strip())
+            if label:
+                role = {"背景": "context", "Context": "context", "社区讨论": "discussion",
+                        "Discussion": "discussion", "标签": "tags", "Tags": "tags"}.get(label.group(1))
+                if role:
+                    found[role] = label.group(2).strip()
+                    continue
+            text = para.strip()
+            if text:
+                found["body"].append(text)
+
+        # Whatever follows the main text but carries no marker is the byline
+        # ("rss · Simon Willison · 7月30日 23:58").
+        if len(found["body"]) > 1:
+            byline = found["body"][1]
+            # Hacker News items hang the thread link off the byline. Stripping
+            # tags there would leave the word "社区讨论" pointing nowhere, so
+            # the URL moves to the discussion paragraph it belongs to.
+            discussion = _DISCUSSION_ANCHOR.search(byline)
+            if discussion:
+                found["discussion_url"] = _clean_url(discussion.group(1))
+                byline = _DISCUSSION_ANCHOR.sub("", byline)
+            found["byline"] = strip_html(byline).strip().strip("·").strip()
+        found["body"] = found["body"][:1]
+        return found
+
     @property
     def references_html(self) -> str:
         match = _NESTED_DETAILS.search(self.html)
@@ -318,7 +398,29 @@ _CONTEXT_PARA = re.compile(r"<p>\s*<strong>\s*(?:背景|Context)\s*</strong>.*?<
 _NESTED_DETAILS = re.compile(r"<details(?![^>]*data-score).*?</details>", re.IGNORECASE | re.DOTALL)
 _SUMMARY_EL = re.compile(r"<summary\b.*?</summary>", re.IGNORECASE | re.DOTALL)
 _OUTER_DETAILS = re.compile(r"^\s*<details\b[^>]*>|</details>\s*$", re.IGNORECASE)
+_PARA = re.compile(r"<p\b[^>]*>(.*?)</p>", re.IGNORECASE | re.DOTALL)
+_SOURCE_ANCHOR = re.compile(
+    r'<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:来源|Source)\s*</a>', re.IGNORECASE
+)
+_DISCUSSION_ANCHOR = re.compile(
+    r'\s*·?\s*<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:社区讨论|Discussion)\s*</a>', re.IGNORECASE
+)
+_LABELLED = re.compile(
+    r"^\s*<strong>\s*(背景|Context|社区讨论|Discussion|标签|Tags)\s*</strong>\s*[:：]?\s*(.*)$",
+    re.IGNORECASE | re.DOTALL,
+)
+#: Horizon joins an item's summary, significance and detail into one paragraph
+#: with a space after the full stop. Chinese does not otherwise put a space
+#: there, so it is an unambiguous place to restore the paragraph breaks.
+_JOINED_SENTENCES = re.compile(r"(?<=。)[ \t]+")
+_TRACKING_FRAGMENT = re.compile(r"#(?:atom|rss|feed)[\w-]*$", re.IGNORECASE)
+
 _CAT_SLUG = re.compile(r"\bcat-([A-Za-z0-9_-]+)")
+
+
+def _clean_url(url: str) -> str:
+    """Drop feed-reader fragments that carry no meaning for a human reader."""
+    return _TRACKING_FRAGMENT.sub("", (url or "").strip())
 _SECTION_COUNT = re.compile(r"\s*\(\d+\)\s*$")
 
 
