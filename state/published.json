@@ -1,5 +1,12 @@
 {
   "published": {
+    "blender-open-movies:1ba07bbb-1456-4293-99a6-833fa450eda0": {
+      "published_at": "2026-08-04T03:49:09+00:00",
+      "remote_id": "48748337",
+      "remote_url": "https://www.acfun.cn/v/ac48748337",
+      "source_url": "https://video.blender.org/w/4pSeQCu9XXz9wWMh5gTNMf",
+      "title": "SINGULARITY - Painterly Space Adventure"
+    },
     "blender-open-movies:3eb93cab-79a2-4fd5-a636-d42e5c59ddea": {
       "published_at": "2026-08-03T03:49:16+00:00",
       "remote_id": "48745511",
@@ -45,8 +52,15 @@
       "remote_url": "https://www.acfun.cn/a/ac48745516",
       "source_url": "https://sayakawaii.github.io/Horizon/2026/08/02/summary-zh.html",
       "title": "Horizon 每日简报 2026-08-02"
+    },
+    "horizon-daily:https://sayakawaii.github.io/Horizon/2026/08/03/summary-zh.html": {
+      "published_at": "2026-08-04T03:49:15+00:00",
+      "remote_id": "48748351",
+      "remote_url": "https://www.acfun.cn/a/ac48748351",
+      "source_url": "https://sayakawaii.github.io/Horizon/2026/08/03/summary-zh.html",
+      "title": "Horizon 每日简报 2026-08-03"
     }
   },
-  "updated_at": "2026-08-03T03:49:21+00:00",
+  "updated_at": "2026-08-04T03:49:15+00:00",
   "version": 1
 }
