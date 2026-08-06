@@ -18,13 +18,28 @@ limits:
   max_filesize_mb: 2000
   max_duration_sec: 3600
   min_duration_sec: 30
-  # Publishing a handful per run keeps the account below AcFun's rate limits
-  # and keeps a bad configuration from flooding your channel.
-  max_items_per_run: 2
+  # With more sources enabled than slots per run, sources take turns rather
+  # than the first one in the file always winning.
+  max_items_per_run: 4
   max_items_per_source: 1
 
 state_file: state/published.json
 work_dir: work
+
+# ---------------------------------------------------------------------------
+# Video sources
+#
+# `licence_allow` below admits every PeerTube licence except 9 (all rights
+# reserved). That is safe *here specifically* because PeerTube makes the
+# licence a required structured enum: an unset licence arrives as null and is
+# rejected, so "not 9" really does mean the uploader declared it reusable.
+# The same rule cannot be applied to sites that publish no licence metadata,
+# where silence means all rights reserved rather than permission.
+#
+# 4/5/6 are the NonCommercial variants, enabled deliberately. AcFun runs
+# monetisation programmes (香蕉, 创作激励), so if you ever join one, revisit
+# this: NC reposting on a monetised account is arguable at best.
+# ---------------------------------------------------------------------------
 
 sources:
   - name: blender-open-movies
@@ -35,7 +50,7 @@ sources:
       channel: blender_open_movies
       # PeerTube licence enum: 1=BY 2=BY-SA 3=BY-ND 4=BY-NC 5=BY-NC-SA
       # 6=BY-NC-ND 7=CC0 8=no known restrictions 9=all rights reserved
-      licence_allow: [1, 2, 3, 7, 8]
+      licence_allow: [1, 2, 3, 4, 5, 6, 7, 8]
       limit: 5
     publish:
       # Run `mediabridge channels` to list valid IDs.
@@ -43,7 +58,7 @@ sources:
       creation_type: 1         # 1 = 转载, 3 = 原创
       tags: [Blender, 开源动画, 搬运]
       title_template: "【搬运】{title}"
-      desc_template: |
+      desc_template: &repost_desc |
         {description}
 
         ――――――――――
@@ -53,9 +68,37 @@ sources:
         许可协议：{license}
         由 MediaBridge 自动搬运。
 
+  - name: tilvids
+    type: peertube
+    enabled: true
+    options:
+      host: tilvids.com
+      licence_allow: [1, 2, 3, 4, 5, 6, 7, 8]
+      limit: 8
+    publish:
+      channel_id: 86           # 科技 > 科普
+      creation_type: 1
+      tags: [科普, 技术, 搬运]
+      title_template: "【搬运】{title}"
+      desc_template: *repost_desc
+
+  - name: makertube
+    type: peertube
+    enabled: true
+    options:
+      host: makertube.net
+      licence_allow: [1, 2, 3, 4, 5, 6, 7, 8]
+      limit: 8
+    publish:
+      channel_id: 86
+      creation_type: 1
+      tags: [手工, DIY, 搬运]
+      title_template: "【搬运】{title}"
+      desc_template: *repost_desc
+
   - name: nasa-video
     type: nasa
-    enabled: false
+    enabled: true
     options:
       search: artemis
       quality: large           # mobile | small | medium | large | orig
@@ -65,67 +108,133 @@ sources:
       creation_type: 1
       tags: [NASA, 航天, 搬运]
       title_template: "【NASA】{title}"
+      desc_template: *repost_desc
 
   - name: internet-archive
     type: archive_org
-    enabled: false
+    enabled: true
     options:
       collection: prelinger
-      # Keep this on. Most Archive items carry no licence metadata at all.
+      # Keep this on. Most Archive items carry no licence metadata at all, and
+      # for those the correct reading is "all rights reserved", not "free".
       require_license: true
-      license_allow: [public-domain, attribution]
+      license_allow: [public-domain, attribution, non-commercial]
       prefer: smallest         # smallest | largest
       limit: 3
     publish:
       channel_id: 184
       creation_type: 1
       tags: [公有领域, 老片, 搬运]
+      desc_template: *repost_desc
 
   - name: wikimedia-commons
     type: wikimedia
-    enabled: false
+    enabled: true
     options:
       search: nasa spacecraft
-      license_allow: [public-domain, attribution]
+      license_allow: [public-domain, attribution, non-commercial]
       limit: 3
     publish:
       channel_id: 86
       creation_type: 1
       tags: [科普, 搬运]
+      desc_template: *repost_desc
 
-  # Article channel (AcFun 专栏) rather than video. Horizon publishes one
-  # AI-scored news digest per day; min_score trims a 70-item digest down to
-  # something readable.
+  # -------------------------------------------------------------------------
+  # Article sources (AcFun 专栏)
   #
-  # Left disabled on purpose: a digest summarises third-party reporting, so you
-  # have to decide whether you may repost it and say so in license_name. The
-  # source refuses to run until you do.
-  - name: horizon-daily
-    type: horizon
+  # Horizon was removed: it digests AI and research reporting, which is too
+  # specialised for a general audience.
+  #
+  # `license_name` is mandatory on every `feed` source. A feed being public
+  # says nothing about whether you may repost it, and for most newsrooms --
+  # BBC, 新华社, 人民日报, 央视 among them -- you may not. Each entry below
+  # records the specific permission the outlet grants.
+  # -------------------------------------------------------------------------
+
+  - name: un-news-zh
+    type: feed
     enabled: true
     options:
-      lang: zh                   # zh | en
-      min_score: 8.0             # Horizon itself only publishes >= 7.0
-      max_entries: 12
-      # Reposts are moderated. A digest whose geopolitics section covered an
-      # FSB terrorism accusation was rejected with `result=11`; the same digest
-      # without that section was accepted. Narrow the categories if you hit it.
-      categories: [tech, papers]
-      include_context: true
-      include_references: false
-      license_name: "原文各条目均注明来源"
-      cover_url: https://sayakawaii.github.io/Horizon/assets/overview_zh.png
+      url: https://news.un.org/feed/subscribe/zh/news/all/rss.xml
+      # This is the firehose, and it carries Security Council and conflict
+      # coverage. A digest containing geopolitics was once rejected outright
+      # with `result=11`, so if that starts happening, swap the URL for one of
+      # the narrower topics -- same shape, just a different slug:
+      #   .../zh/news/topic/climate-change/feed/rss.xml   气候变化
+      #   .../zh/news/topic/humanitarian-aid/feed/rss.xml 人道救援与灾害
+      #   .../zh/news/topic/health/feed/rss.xml           公共卫生
+      #   .../zh/news/topic/sdgs/feed/rss.xml             可持续发展
+      #   .../zh/news/topic/culture-and-education/feed/rss.xml 文化教育
+      # The full list is at https://news.un.org/zh/rss-feeds
+      # The RSS summary is one sentence, and the UN's permission is to
+      # reproduce stories *in their entirety*, so the body has to come from
+      # the page itself.
+      body: scrape
+      body_class: field--name-field-text-column
+      # `link` is a click-tracking redirect here; `guid` is the canonical URL
+      # the UN asks you to link back to.
+      prefer_guid_link: true
+      # UN *text* may be reproduced freely. UN *photographs* may not -- they
+      # are licensed separately and cost money for online use.
+      strip_images: true
+      author: 联合国新闻
+      license_name: 联合国允许全文转载新闻稿，须完整转载、不作删改并注明出处
+      license_url: https://www.un.org/zh/about-us/copyright
+      limit: 2
     publish:
-      target: acfun_article      # articles need a realm as well as a channel
-      channel_id: 110            # 资讯
-      realm_id: 28               # 新闻资讯
+      target: acfun_article    # articles need a realm as well as a channel
+      channel_id: 110          # 资讯
+      realm_id: 28             # 新闻资讯
       creation_type: 1
-      tags: [科技, 资讯, 搬运]
+      tags: [联合国, 国际, 资讯, 搬运]
       title_template: "{title}"
-      desc_template: |
+      desc_template: &article_desc |
         {description}
 
         ――――――――――
-        本文为转载，内容由 Horizon 自动生成。
+        本文为转载，版权归原作者所有。
+        来源：{author}
         原始链接：{webpage_url}
+        许可说明：{license}
         由 MediaBridge 自动搬运。
+
+  - name: usgs-quakes
+    type: usgs
+    enabled: true
+    options:
+      level: "4.5"             # significant | 4.5 | 2.5 | 1.0 | all
+      period: week             # hour | day | week | month
+      min_magnitude: 5.0
+      max_entries: 12
+      lang: zh
+    publish:
+      target: acfun_article
+      channel_id: 110
+      realm_id: 28
+      creation_type: 1
+      tags: [地震, 自然灾害, 科普, 搬运]
+      title_template: "{title}"
+      desc_template: *article_desc
+
+  - name: nasa-news
+    type: feed
+    enabled: true
+    options:
+      url: https://www.nasa.gov/news-release/feed/
+      body: content           # this feed carries the full article inline
+      # APOD entries are picture-of-the-day pages whose feed body is mostly
+      # site navigation rather than an article.
+      exclude_categories: [APOD]
+      author: NASA
+      license_name: NASA 内容原则上属公有领域，第三方素材除外
+      license_url: https://www.nasa.gov/nasa-brand-center/images-and-media/
+      limit: 2
+    publish:
+      target: acfun_article
+      channel_id: 110
+      realm_id: 28
+      creation_type: 1
+      tags: [NASA, 航天, 科普, 搬运]
+      title_template: "{title}"
+      desc_template: *article_desc

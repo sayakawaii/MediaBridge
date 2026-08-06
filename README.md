@@ -13,6 +13,8 @@ flowchart LR
     WM[Wikimedia Commons]
     NASA[NASA]
     HZ[Horizon]
+    FD[RSS/Atom feeds]
+    UG[USGS]
   end
   Orch --> src
   src -->|MediaItem| Filt[licence whitelist<br/>dedup, size and duration]
@@ -125,16 +127,22 @@ To change the time, edit the cron and remember to convert: China time minus 8 ho
 | `wikimedia` | Reviewed `extmetadata` | Files are usually `.ogv`/`.webm` and need transcoding to MP4, which is CPU-bound on a runner. |
 | `nasa` | Public domain by policy | No API key needed. See the caveat below. |
 | `horizon` | You must state it | Articles, not video. See below. |
+| `feed` | You must state it | Articles from any RSS/Atom newsroom. See below. |
+| `usgs` | Public domain by policy | Articles. Builds an earthquake digest from the USGS event feed. |
 
 Everything is configured in `config.yaml`; see `config.example.yaml` for a commented walkthrough. Any `${VAR}` is substituted from the environment, and a variable that is not set is deliberately left as the literal `${VAR}` so the failure is loud rather than silent.
 
 ## Articles (AcFun 专栏)
 
-Set `publish.target: acfun_article` and give it a `realm_id` as well as a `channel_id` (`mediabridge channels --articles`). The `horizon` source feeds this path: [Horizon](https://github.com/sayakawaii/Horizon) publishes one AI-scored news digest per day, and `min_score` cuts a 70-item digest down to the handful worth reposting.
+Set `publish.target: acfun_article` and give it a `realm_id` as well as a `channel_id` (`mediabridge channels --articles`). Three sources feed this path:
 
-Two things are worth knowing before you enable it:
+- **`feed`** takes any RSS or Atom newsroom. Use `body: content` when the feed carries the whole article, and `body: scrape` with a `body_class` when it carries only a summary and the article lives on the page. `strip_images: true` covers the common case of an outlet that licenses its text but not its photography.
+- **`usgs`** has no upstream article at all: it renders the USGS event feed into an earthquake digest. This is the one source whose wording MediaBridge writes itself, so it stays deliberately plain.
+- **`horizon`** publishes one AI-scored news digest per day from [Horizon](https://github.com/sayakawaii/Horizon), with `min_score` cutting a 70-item digest down to the handful worth reposting. Its subject matter is AI and research reporting, which is narrower than a general audience wants.
 
-- **`license_name` is mandatory and has no default.** A Horizon digest summarises third-party reporting, so whether you may repost it is a judgement MediaBridge will not make for you. The source refuses to run until you have made it.
+Two things are worth knowing before you enable any of them:
+
+- **`license_name` is mandatory on `feed` and `horizon`, and has no default.** A feed being public says nothing about whether you may repost it. Most newsrooms do not permit it — BBC, 新华社, 人民日报 and 央视 all reserve their rights — and reposting news in China additionally runs into 互联网新闻信息服务 licensing rules that an individual account does not satisfy. Sources with genuinely open terms exist (UN News permits whole stories with credit and a link back; NASA and USGS output is public domain), and MediaBridge will not guess which kind you have found.
 - **AcFun silently strips most HTML from article bodies.** Across 38 published articles (~170 kB of stored HTML) only `p`, `strong`, `h1`–`h3`, `br`, `hr`, `img`, `span` and `div` survived, `src` was the only surviving attribute, and **not one `<a>` element appeared anywhere**. `postArticle` reports success either way, so the loss is invisible unless you read the published page. MediaBridge therefore rewrites links as `label (https://example.com)` before submitting — less pretty than a hyperlink, but it is the form that actually reaches the reader, which matters when the links are the attribution. Emoji are stripped too, so they are removed up front rather than left as stray spaces and orphaned variation selectors.
 
 Two limits differ from the video channel and are enforced client-side:

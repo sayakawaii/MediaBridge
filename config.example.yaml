@@ -122,10 +122,71 @@ sources:
       creation_type: 1
       tags: [科技, 资讯, 搬运]
       title_template: "{title}"
-      desc_template: |
+      desc_template: &article_desc |
         {description}
 
         ――――――――――
-        本文为转载，内容由 Horizon 自动生成。
+        本文为转载，版权归原作者所有。
+        来源：{author}
         原始链接：{webpage_url}
+        许可说明：{license}
         由 MediaBridge 自动搬运。
+
+  # A generic RSS/Atom article source, so a new outlet is a config change
+  # rather than a plugin. `license_name` is mandatory: a feed being public says
+  # nothing about whether you may repost it, and for most newsrooms -- BBC,
+  # 新华社, 人民日报, 央视 among them -- you may not. Check the outlet's terms
+  # and record what they actually permit.
+  #
+  # UN News is the worked example because its terms are unusually clear: whole
+  # stories may be reproduced free of charge with credit and a link back.
+  - name: un-news-zh
+    type: feed
+    enabled: false
+    options:
+      url: https://news.un.org/feed/subscribe/zh/news/all/rss.xml
+      # 'content' takes the article from the feed itself (NASA works this way).
+      # 'scrape' fetches the page, which is required here because the RSS
+      # carries one sentence and the UN's permission is to reproduce stories
+      # in their entirety.
+      body: scrape
+      body_class: field--name-field-text-column
+      # This feed's `link` is a click-tracking redirect; `guid` holds the
+      # canonical URL that the UN asks you to link back to.
+      prefer_guid_link: true
+      # UN *text* may be reproduced freely. UN *photographs* may not; they are
+      # licensed separately and are chargeable for online use.
+      strip_images: true
+      author: 联合国新闻
+      license_name: ""           # required; e.g. "联合国允许全文转载，须注明出处"
+      license_url: https://www.un.org/zh/about-us/copyright
+      limit: 2
+    publish:
+      target: acfun_article
+      channel_id: 110
+      realm_id: 28
+      creation_type: 1
+      tags: [联合国, 国际, 资讯, 搬运]
+      title_template: "{title}"
+      desc_template: *article_desc
+
+  # Unlike every other source this one has no upstream article: it turns the
+  # USGS event feed into a readable digest. US government work, so it is public
+  # domain and needs no license_name.
+  - name: usgs-quakes
+    type: usgs
+    enabled: false
+    options:
+      level: "4.5"               # significant | 4.5 | 2.5 | 1.0 | all
+      period: week               # hour | day | week | month
+      min_magnitude: 5.0
+      max_entries: 12
+      lang: zh                   # zh | en
+    publish:
+      target: acfun_article
+      channel_id: 110
+      realm_id: 28
+      creation_type: 1
+      tags: [地震, 自然灾害, 科普, 搬运]
+      title_template: "{title}"
+      desc_template: *article_desc

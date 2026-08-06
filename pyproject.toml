@@ -44,6 +44,8 @@ archive_org = "mediabridge.sources.archive_org:ArchiveOrgSource"
 wikimedia = "mediabridge.sources.wikimedia:WikimediaSource"
 nasa = "mediabridge.sources.nasa:NasaSource"
 horizon = "mediabridge.sources.horizon:HorizonSource"
+feed = "mediabridge.sources.feed:FeedSource"
+usgs = "mediabridge.sources.usgs:UsgsSource"
 
 [project.entry-points."mediabridge.publishers"]
 acfun_video = "mediabridge.publishers.acfun.video:AcFunVideoPublisher"

@@ -7,6 +7,10 @@ remux or transcode to MP4 before upload.
 
 Cover images need an explicit ``iiurlwidth``; without it the API returns no
 ``thumburl`` for video files.
+
+Commons also enforces a user-agent policy that the shared browser string fails:
+the API answers a generic ``Mozilla/5.0`` with HTTP 403 and a pointer to the
+robot policy. This source therefore identifies itself by name instead.
 """
 
 from __future__ import annotations
@@ -16,6 +20,7 @@ from datetime import datetime
 
 from pydantic import Field
 
+from .. import __version__
 from ..filters import licenses
 from ..models import FETCH_DIRECT, MediaItem
 from ..utils.text import strip_html
@@ -25,6 +30,10 @@ log = logging.getLogger(__name__)
 
 API_URL = "https://commons.wikimedia.org/w/api.php"
 THUMB_WIDTH = 1280
+
+#: https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy asks for a
+#: tool name and a way to make contact.
+WIKIMEDIA_USER_AGENT = f"MediaBridge/{__version__} (https://github.com/sayakawaii/MediaBridge)"
 
 #: Only the extmetadata fields we actually read. Requesting the full set makes
 #: the response several times larger for no benefit.
@@ -63,6 +72,7 @@ class WikimediaSource(Source):
             "formatversion": "2",
         }
 
+        self.session.headers["User-Agent"] = WIKIMEDIA_USER_AGENT
         payload = self.get_json(API_URL, params=params)
         pages = ((payload or {}).get("query") or {}).get("pages") or []
 
