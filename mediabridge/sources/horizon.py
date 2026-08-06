@@ -347,8 +347,13 @@ class DigestItem:
         html = _OUTER_DETAILS.sub("", html)
 
         found: dict = {
-            "body": [], "url": "", "byline": "", "discussion_url": "",
-            "context": "", "discussion": "", "tags": "",
+            "body": [],
+            "url": "",
+            "byline": "",
+            "discussion_url": "",
+            "context": "",
+            "discussion": "",
+            "tags": "",
         }
         for para in _PARA.findall(html):
             source = _SOURCE_ANCHOR.search(para)
@@ -357,8 +362,14 @@ class DigestItem:
                 continue
             label = _LABELLED.match(para.strip())
             if label:
-                role = {"背景": "context", "Context": "context", "社区讨论": "discussion",
-                        "Discussion": "discussion", "标签": "tags", "Tags": "tags"}.get(label.group(1))
+                role = {
+                    "背景": "context",
+                    "Context": "context",
+                    "社区讨论": "discussion",
+                    "Discussion": "discussion",
+                    "标签": "tags",
+                    "Tags": "tags",
+                }.get(label.group(1))
                 if role:
                     found[role] = label.group(2).strip()
                     continue
@@ -399,9 +410,7 @@ _NESTED_DETAILS = re.compile(r"<details(?![^>]*data-score).*?</details>", re.IGN
 _SUMMARY_EL = re.compile(r"<summary\b.*?</summary>", re.IGNORECASE | re.DOTALL)
 _OUTER_DETAILS = re.compile(r"^\s*<details\b[^>]*>|</details>\s*$", re.IGNORECASE)
 _PARA = re.compile(r"<p\b[^>]*>(.*?)</p>", re.IGNORECASE | re.DOTALL)
-_SOURCE_ANCHOR = re.compile(
-    r'<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:来源|Source)\s*</a>', re.IGNORECASE
-)
+_SOURCE_ANCHOR = re.compile(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:来源|Source)\s*</a>', re.IGNORECASE)
 _DISCUSSION_ANCHOR = re.compile(
     r'\s*·?\s*<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:社区讨论|Discussion)\s*</a>', re.IGNORECASE
 )
@@ -421,6 +430,8 @@ _CAT_SLUG = re.compile(r"\bcat-([A-Za-z0-9_-]+)")
 def _clean_url(url: str) -> str:
     """Drop feed-reader fragments that carry no meaning for a human reader."""
     return _TRACKING_FRAGMENT.sub("", (url or "").strip())
+
+
 _SECTION_COUNT = re.compile(r"\s*\(\d+\)\s*$")
 
 
