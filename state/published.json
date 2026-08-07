@@ -28,6 +28,13 @@
       "source_url": "https://video.blender.org/w/dmhvQNzwBnrWy1iYzVv5g7",
       "title": "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film"
     },
+    "blender-open-movies:f507dfdc-e73e-45a4-9778-d758cbe1ce96": {
+      "published_at": "2026-08-07T04:44:52+00:00",
+      "remote_id": "48757337",
+      "remote_url": "https://www.acfun.cn/v/ac48757337",
+      "source_url": "https://video.blender.org/w/wfW3bDTkUhQKRnEfT9Wpeq",
+      "title": "Cosmos Laundromat - First Cycle. Official Blender Foundation release."
+    },
     "horizon-daily:https://sayakawaii.github.io/Horizon/2026/07/29/summary-zh.html": {
       "published_at": "2026-07-30T07:42:37+00:00",
       "refreshed_at": "2026-08-03T02:57:51+00:00",
@@ -87,8 +94,29 @@
       "remote_url": "https://www.acfun.cn/a/ac48754617",
       "source_url": "https://sayakawaii.github.io/Horizon/2026/08/05/summary-zh.html",
       "title": "Horizon 每日简报 2026-08-05"
+    },
+    "makertube:4cbbd641-18f6-405a-995e-725b8c0a0d96": {
+      "published_at": "2026-08-07T05:32:40+00:00",
+      "remote_id": "48757423",
+      "remote_url": "https://www.acfun.cn/v/ac48757423",
+      "source_url": "https://makertube.net/w/atzh2dnLZwixGaFmzkDjiu",
+      "title": "Live from \"Da Maker Lounge\" 🟣🎹🛠️🔵 - 8/6/2026, 11:01:16 PM"
+    },
+    "nasa-video:Artemis II Science - AVATAR Vertical Video": {
+      "published_at": "2026-08-07T05:34:44+00:00",
+      "remote_id": "48757426",
+      "remote_url": "https://www.acfun.cn/v/ac48757426",
+      "source_url": "https://images.nasa.gov/details/Artemis%20II%20Science%20-%20AVATAR%20Vertical%20Video",
+      "title": "Artemis II Science - AVATAR Vertical Video"
+    },
+    "tilvids:3660be6b-d1f9-4780-abab-249827e61a9d": {
+      "published_at": "2026-08-07T05:18:28+00:00",
+      "remote_id": "48757404",
+      "remote_url": "https://www.acfun.cn/v/ac48757404",
+      "source_url": "https://tilvids.com/w/7HsD6Yw7brxjnDHNW4v6ur",
+      "title": "Buskill: a USB killswitch security key"
     }
   },
-  "updated_at": "2026-08-06T05:42:44+00:00",
+  "updated_at": "2026-08-07T05:34:44+00:00",
   "version": 1
 }
