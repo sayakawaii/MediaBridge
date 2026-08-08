@@ -95,12 +95,33 @@
       "source_url": "https://sayakawaii.github.io/Horizon/2026/08/05/summary-zh.html",
       "title": "Horizon 每日简报 2026-08-05"
     },
+    "internet-archive:SoundieF": {
+      "published_at": "2026-08-08T04:01:06+00:00",
+      "remote_id": "48759716",
+      "remote_url": "https://www.acfun.cn/v/ac48759716",
+      "source_url": "https://archive.org/details/SoundieF",
+      "title": "Soundie - Reg Kehoe and his Marimba Queens"
+    },
     "makertube:4cbbd641-18f6-405a-995e-725b8c0a0d96": {
       "published_at": "2026-08-07T05:32:40+00:00",
       "remote_id": "48757423",
       "remote_url": "https://www.acfun.cn/v/ac48757423",
       "source_url": "https://makertube.net/w/atzh2dnLZwixGaFmzkDjiu",
       "title": "Live from \"Da Maker Lounge\" 🟣🎹🛠️🔵 - 8/6/2026, 11:01:16 PM"
+    },
+    "makertube:b343abcb-cd0e-46ae-b1c2-496233404a3a": {
+      "published_at": "2026-08-08T03:56:13+00:00",
+      "remote_id": "48759698",
+      "remote_url": "https://www.acfun.cn/v/ac48759698",
+      "source_url": "https://makertube.net/w/o8UACWwyYUKNvrJkMj82ed",
+      "title": "🟣Da Maker Lounge: C-F-G boogie (2026-08-07)"
+    },
+    "nasa-video:Artemis II Science - AVATAR Horizontal Video": {
+      "published_at": "2026-08-08T03:59:03+00:00",
+      "remote_id": "48759709",
+      "remote_url": "https://www.acfun.cn/v/ac48759709",
+      "source_url": "https://images.nasa.gov/details/Artemis%20II%20Science%20-%20AVATAR%20Horizontal%20Video",
+      "title": "Artemis II Science - AVATAR Horizontal Video"
     },
     "nasa-video:Artemis II Science - AVATAR Vertical Video": {
       "published_at": "2026-08-07T05:34:44+00:00",
@@ -115,8 +136,15 @@
       "remote_url": "https://www.acfun.cn/v/ac48757404",
       "source_url": "https://tilvids.com/w/7HsD6Yw7brxjnDHNW4v6ur",
       "title": "Buskill: a USB killswitch security key"
+    },
+    "tilvids:b1652567-6288-45d8-8144-4c859635ad0c": {
+      "published_at": "2026-08-08T03:53:42+00:00",
+      "remote_id": "48759687",
+      "remote_url": "https://www.acfun.cn/v/ac48759687",
+      "source_url": "https://tilvids.com/w/nUw7Aox8dZpKKuQmMoBTUy",
+      "title": "Sausalito"
     }
   },
-  "updated_at": "2026-08-07T05:34:44+00:00",
+  "updated_at": "2026-08-08T04:01:06+00:00",
   "version": 1
 }
