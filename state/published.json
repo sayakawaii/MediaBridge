@@ -95,12 +95,26 @@
       "source_url": "https://sayakawaii.github.io/Horizon/2026/08/05/summary-zh.html",
       "title": "Horizon 每日简报 2026-08-05"
     },
+    "internet-archive:JayCanDoIt": {
+      "published_at": "2026-08-09T05:18:52+00:00",
+      "remote_id": "48762154",
+      "remote_url": "https://www.acfun.cn/v/ac48762154",
+      "source_url": "https://archive.org/details/JayCanDoIt",
+      "title": "Jay Can Do It"
+    },
     "internet-archive:SoundieF": {
       "published_at": "2026-08-08T04:01:06+00:00",
       "remote_id": "48759716",
       "remote_url": "https://www.acfun.cn/v/ac48759716",
       "source_url": "https://archive.org/details/SoundieF",
       "title": "Soundie - Reg Kehoe and his Marimba Queens"
+    },
+    "makertube:3c987669-23bc-499b-bda4-8e21ba92234f": {
+      "published_at": "2026-08-09T05:07:09+00:00",
+      "remote_id": "48762130",
+      "remote_url": "https://www.acfun.cn/v/ac48762130",
+      "source_url": "https://makertube.net/w/8tZsAN12oueMqvcJ3vmejX",
+      "title": "ICE 4 verlässt Zürich – 8 Stunden bis Hamburg"
     },
     "makertube:4cbbd641-18f6-405a-995e-725b8c0a0d96": {
       "published_at": "2026-08-07T05:32:40+00:00",
@@ -115,6 +129,13 @@
       "remote_url": "https://www.acfun.cn/v/ac48759698",
       "source_url": "https://makertube.net/w/o8UACWwyYUKNvrJkMj82ed",
       "title": "🟣Da Maker Lounge: C-F-G boogie (2026-08-07)"
+    },
+    "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
+      "published_at": "2026-08-09T05:12:18+00:00",
+      "remote_id": "48762140",
+      "remote_url": "https://www.acfun.cn/v/ac48762140",
+      "source_url": "https://images.nasa.gov/details/ARTEMIS%20II%20Mission%20Recap_ANB_V3",
+      "title": "Artemis II Moon Mission Complete!"
     },
     "nasa-video:Artemis II Science - AVATAR Horizontal Video": {
       "published_at": "2026-08-08T03:59:03+00:00",
@@ -143,8 +164,15 @@
       "remote_url": "https://www.acfun.cn/v/ac48759687",
       "source_url": "https://tilvids.com/w/nUw7Aox8dZpKKuQmMoBTUy",
       "title": "Sausalito"
+    },
+    "tilvids:c8a77bb4-4f8e-4abd-bcfd-531454a58641": {
+      "published_at": "2026-08-09T05:04:04+00:00",
+      "remote_id": "48762123",
+      "remote_url": "https://www.acfun.cn/v/ac48762123",
+      "source_url": "https://tilvids.com/w/qM6YT38g6ak1JBoWzsLsZg",
+      "title": "I HAD DINNER WITH A DOMINATRIX"
     }
   },
-  "updated_at": "2026-08-08T04:01:06+00:00",
+  "updated_at": "2026-08-09T05:18:52+00:00",
   "version": 1
 }
