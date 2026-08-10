@@ -102,6 +102,13 @@
       "source_url": "https://archive.org/details/JayCanDoIt",
       "title": "Jay Can Do It"
     },
+    "internet-archive:Liberty_2": {
+      "published_at": "2026-08-10T04:23:48+00:00",
+      "remote_id": "48764106",
+      "remote_url": "https://www.acfun.cn/v/ac48764106",
+      "source_url": "https://archive.org/details/Liberty_2",
+      "title": "Liberty"
+    },
     "internet-archive:SoundieF": {
       "published_at": "2026-08-08T04:01:06+00:00",
       "remote_id": "48759716",
@@ -115,6 +122,13 @@
       "remote_url": "https://www.acfun.cn/v/ac48762130",
       "source_url": "https://makertube.net/w/8tZsAN12oueMqvcJ3vmejX",
       "title": "ICE 4 verlässt Zürich – 8 Stunden bis Hamburg"
+    },
+    "makertube:4b401c5a-e7b2-4960-b01b-5bc9ce3add3e": {
+      "published_at": "2026-08-10T04:18:39+00:00",
+      "remote_id": "48764100",
+      "remote_url": "https://www.acfun.cn/v/ac48764100",
+      "source_url": "https://makertube.net/w/ahX7mHGr6oofzLuS7EJJVC",
+      "title": "ICE L AM RHEIN – TROTZ STRECKENSPERRUNG?!   | 21:9  UWQHD"
     },
     "makertube:4cbbd641-18f6-405a-995e-725b8c0a0d96": {
       "published_at": "2026-08-07T05:32:40+00:00",
@@ -171,8 +185,22 @@
       "remote_url": "https://www.acfun.cn/v/ac48762123",
       "source_url": "https://tilvids.com/w/qM6YT38g6ak1JBoWzsLsZg",
       "title": "I HAD DINNER WITH A DOMINATRIX"
+    },
+    "tilvids:ffe0d4ad-1a7e-451c-a713-a51ab047fbe4": {
+      "published_at": "2026-08-10T04:16:48+00:00",
+      "remote_id": "48764093",
+      "remote_url": "https://www.acfun.cn/v/ac48764093",
+      "source_url": "https://tilvids.com/w/xAC6urYo6WR5wDzcxyzJVS",
+      "title": "pantheon"
+    },
+    "wikimedia-commons:10703553": {
+      "published_at": "2026-08-10T04:25:19+00:00",
+      "remote_id": "48764120",
+      "remote_url": "https://www.acfun.cn/v/ac48764120",
+      "source_url": "https://commons.wikimedia.org/wiki/File:NASA_Team_Captures_Hayabusa_Spacecraft_Reentry.ogv",
+      "title": "NASA Team Captures Hayabusa Spacecraft Reentry"
     }
   },
-  "updated_at": "2026-08-09T05:18:52+00:00",
+  "updated_at": "2026-08-10T04:25:19+00:00",
   "version": 1
 }
