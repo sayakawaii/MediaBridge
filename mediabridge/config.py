@@ -65,6 +65,21 @@ class LimitsConfig(BaseModel):
     max_items_per_run: int = 3
     max_items_per_source: int = 2
 
+    max_items_per_target: dict[str, int] = Field(default_factory=dict)
+    """Per-`publish.target` caps, e.g. ``{acfun_video: 4, acfun_article: 2}``.
+
+    Sources are visited in file order, so without this a single global budget is
+    spent entirely by whichever sources happen to be listed first -- six video
+    sources ahead of three article sources means the articles are never reached.
+    Budgeting per target decouples them. `max_items_per_run` still applies as an
+    overall ceiling, so the effective cap for a source is the lower of the two.
+    An empty mapping restores the single-budget behaviour.
+    """
+
+    def target_budget(self, target: str) -> int | None:
+        """The cap for one publish target, or None when it is unbudgeted."""
+        return self.max_items_per_target.get(target)
+
 
 class PublishConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")

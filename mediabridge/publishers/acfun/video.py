@@ -18,13 +18,14 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from ...errors import PublishError, SkipItem
 from ...models import FetchedMedia, PublishResult
 from ...utils.text import (
-    MAX_DESC_LEN,
     MAX_TITLE_LEN,
+    MAX_VIDEO_DESC_LEN,
     collapse_whitespace,
     normalise_tags,
     render_template,
@@ -129,7 +130,21 @@ VERIFY_TIMEOUT_SEC = 240
 VERIFY_INTERVAL_SEC = 15
 
 
-def verify_transcode(client: AcFunClient, douga_id: str) -> str:
+@dataclass(frozen=True)
+class TranscodeOutcome:
+    """What the read-back saw, and whether it is bad enough to disown."""
+
+    status: str
+
+    failed: bool = False
+    """Only ever set by a *confirmed* failure, never by an unread submission.
+
+    Treating a lost poll as a failure would retry -- and so re-upload -- a video
+    that is in fact perfectly fine, which is the more expensive mistake.
+    """
+
+
+def verify_transcode(client: AcFunClient, douga_id: str) -> TranscodeOutcome:
     """Watch a fresh submission until it leaves the pre-transcode state.
 
     ``createDouga`` returns an id for a video AcFun cannot decode just as
@@ -143,7 +158,7 @@ def verify_transcode(client: AcFunClient, douga_id: str) -> str:
             info = client.post_form("/video/api/getDougaInfo", {"dougaId": str(douga_id)})
         except PublishError as exc:  # a lost poll must not fail a good submission
             log.debug("Could not read back ac%s: %s", douga_id, exc)
-            return "unknown"
+            return TranscodeOutcome("unknown")
 
         videos = info.get("videoList") or []
         status = videos[0].get("sourceStatus") if videos else None
@@ -151,17 +166,26 @@ def verify_transcode(client: AcFunClient, douga_id: str) -> str:
         # only a lasting 2 means failure -- hence waiting rather than sampling.
         if status is not None and status != TRANSCODE_FAILED:
             log.info("ac%s transcoded: %s", douga_id, SOURCE_STATUS.get(status, status))
-            return SOURCE_STATUS.get(status, str(status))
+            return TranscodeOutcome(SOURCE_STATUS.get(status, str(status)))
         time.sleep(VERIFY_INTERVAL_SEC)
 
+    if status != TRANSCODE_FAILED:
+        log.warning(
+            "ac%s reported no transcode status within %ds; assuming the read-back is at fault "
+            "rather than the video.",
+            douga_id,
+            VERIFY_TIMEOUT_SEC,
+        )
+        return TranscodeOutcome("unknown")
+
     log.error(
-        "ac%s is still '%s' after %ds. The submission exists but the video will not play; "
-        "check the upload before trusting later runs.",
+        "ac%s is still '%s' after %ds. The submission exists but the video will not play, so it "
+        "is not being recorded as published; a later run will try it again.",
         douga_id,
-        SOURCE_STATUS.get(status, status),
+        SOURCE_STATUS[TRANSCODE_FAILED],
         VERIFY_TIMEOUT_SEC,
     )
-    return SOURCE_STATUS.get(status, str(status))
+    return TranscodeOutcome(SOURCE_STATUS[TRANSCODE_FAILED], failed=True)
 
 
 def _report_failure(client: AcFunClient, task_id: str, exc: Exception) -> None:
@@ -203,7 +227,7 @@ class AcFunVideoPublisher(Publisher):
             collapse_whitespace(render_template(publish_config.title_template, values)),
             MAX_TITLE_LEN,
         )
-        description = render_within(publish_config.desc_template, values, MAX_DESC_LEN)
+        description = render_within(publish_config.desc_template, values, MAX_VIDEO_DESC_LEN)
         if not title:
             raise PublishError(f"Rendered an empty title for {item.webpage_url}")
         return {"title": title, "description": description}
@@ -262,7 +286,19 @@ class AcFunVideoPublisher(Publisher):
 
         url = f"https://www.acfun.cn/v/ac{douga_id}"
         log.info("Published: %s -> %s", fields["title"], url)
+
         outcome = verify_transcode(client, str(douga_id))
+        if outcome.failed:
+            # Reported rather than raised so the id and URL of the dead
+            # submission reach the run summary; the orchestrator keeps a
+            # not-ok result out of the ledger, which is what allows a retry.
+            return PublishResult(
+                ok=False,
+                remote_id=str(douga_id),
+                url=url,
+                message=f"submitted but AcFun could not transcode it ({outcome.status}); "
+                f"delete ac{douga_id} by hand",
+            )
         return PublishResult(
-            ok=True, remote_id=str(douga_id), url=url, message=f"submitted for review ({outcome})"
+            ok=True, remote_id=str(douga_id), url=url, message=f"submitted for review ({outcome.status})"
         )

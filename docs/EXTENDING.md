@@ -94,7 +94,9 @@ This is not cosmetic. AcFun sanitises article bodies server-side and **silently 
 
 No anchor appeared anywhere in the sample, so a link left as `<a href>` reaches the reader as bare text with the URL gone. `flatten_for_acfun` therefore rewrites links as `label (https://example.com)`, converts list items to bulleted paragraphs, inlines `<details>`, drops relative image sources that AcFun could not resolve anyway, and removes emoji — the server deletes those but keeps the space around them, so `⭐️ 9.0/10` would otherwise arrive as ` 9.0/10` behind an orphaned U+FE0F.
 
-Article submissions also differ from video in two ways the publisher handles for you: the description limit is 200 characters rather than 1000 (`result=110014` above it), and a cover is optional. Since `postArticle` has no `originalLinkUrl` field, the description is the only place attribution fits, so `render_within` shrinks the summary instead of trimming the credit off the end.
+Article submissions differ from video in two ways the publisher handles for you. A cover is optional. And attribution is appended to the body: `postArticle` has no `originalLinkUrl` field but places no limit on `detail`, so the publisher adds a 转载信息 block naming the author, the source link, the licence and the licence terms to whatever `body_html` you produce. Your source does not need to write one, and should not — a second block would only duplicate it.
+
+The 200-character description limit applies to articles and video alike (`result=110014` and `result=109015`), and both go through `render_within`, which shrinks the upstream summary instead of trimming the credit off the end. A `desc_template` whose fixed text alone exceeds the limit raises `ConfigError` rather than producing an uncredited repost.
 
 `mediabridge/sources/horizon.py` is a complete worked example.
 

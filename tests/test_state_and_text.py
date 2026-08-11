@@ -5,6 +5,7 @@ import json
 import pytest
 
 from mediabridge.config import LimitsConfig
+from mediabridge.errors import ConfigError
 from mediabridge.filters.limits import check, ytdlp_match_filter
 from mediabridge.models import MediaItem, PublishResult
 from mediabridge.state import State
@@ -149,10 +150,12 @@ def test_render_within_sacrifices_the_summary_not_the_attribution():
     assert out.endswith("原始链接：https://example.org/a")
 
 
-def test_render_within_falls_back_when_the_boilerplate_alone_overflows():
+def test_render_within_refuses_to_mangle_an_overlong_attribution():
+    # Trimming the end here would silently drop the credit, which is the one
+    # thing that must survive; an operator has to shorten the template instead.
     values = {"description": "x", "webpage_url": "https://example.org/" + "y" * 300}
-    out = render_within("{description} 原始链接：{webpage_url}", values, 200)
-    assert len(out) <= 200
+    with pytest.raises(ConfigError, match="desc_template renders to"):
+        render_within("{description} 原始链接：{webpage_url}", values, 200)
 
 
 def test_normalise_tags_deduplicates_and_strips():

@@ -37,6 +37,12 @@ _PREFERRED_EXTENSIONS = (".mp4", ".m4v")
 #: Derivatives below this are thumbnails or samples, not the actual work.
 _MIN_USEFUL_BYTES = 512 * 1024
 
+#: Both endpoints redirect to whichever storage node holds the item
+#: (``dnNNNNNN.us.archive.org``), and those nodes are routinely slow enough to
+#: blow the 30s default -- a live run lost a candidate to exactly that. Waiting
+#: is cheaper than the discovery request being thrown away.
+ARCHIVE_TIMEOUT_SEC = 120
+
 
 class ArchiveOrgOptions(SourceOptions):
     collection: str | None = "prelinger"
@@ -89,7 +95,7 @@ class ArchiveOrgSource(Source):
         ):
             params.append(("fl[]", field))
 
-        payload = self.get_json(SEARCH_URL, params=params)
+        payload = self.get_json(SEARCH_URL, params=params, timeout=ARCHIVE_TIMEOUT_SEC)
         docs = ((payload or {}).get("response") or {}).get("docs") or []
 
         allowed = licenses.parse_allowlist(self.options.license_allow)
@@ -124,7 +130,7 @@ class ArchiveOrgSource(Source):
         if not identifier:
             return None
 
-        metadata = self.get_json(f"{METADATA_URL}/{identifier}")
+        metadata = self.get_json(f"{METADATA_URL}/{identifier}", timeout=ARCHIVE_TIMEOUT_SEC)
         chosen = self._choose_file(metadata.get("files") or [])
         if not chosen:
             log.debug("[%s] %s has no usable video derivative", self.name, identifier)

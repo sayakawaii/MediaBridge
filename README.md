@@ -145,14 +145,16 @@ Two things are worth knowing before you enable any of them:
 - **`license_name` is mandatory on `feed` and `horizon`, and has no default.** A feed being public says nothing about whether you may repost it. Most newsrooms do not permit it — BBC, 新华社, 人民日报 and 央视 all reserve their rights — and reposting news in China additionally runs into 互联网新闻信息服务 licensing rules that an individual account does not satisfy. Sources with genuinely open terms exist (UN News permits whole stories with credit and a link back; NASA and USGS output is public domain), and MediaBridge will not guess which kind you have found.
 - **AcFun silently strips most HTML from article bodies.** Across 38 published articles (~170 kB of stored HTML) only `p`, `strong`, `h1`–`h3`, `br`, `hr`, `img`, `span` and `div` survived, `src` was the only surviving attribute, and **not one `<a>` element appeared anywhere**. `postArticle` reports success either way, so the loss is invisible unless you read the published page. MediaBridge therefore rewrites links as `label (https://example.com)` before submitting — less pretty than a hyperlink, but it is the form that actually reaches the reader, which matters when the links are the attribution. Emoji are stripped too, so they are removed up front rather than left as stray spaces and orphaned variation selectors.
 
-Two limits differ from the video channel and are enforced client-side:
+Two limits are enforced client-side, and one of them differs from the video channel:
 
 | | Video | Article |
 | --- | --- | --- |
-| Description | 1000 characters | **200** (`result=110014` above that) |
+| Description | **200** (`result=109015` above that) | **200** (`result=110014` above that) |
 | Cover | required | optional (only title, channel and creationType are mandatory) |
 
-Because an article has no `originalLinkUrl` field, the description is the only place attribution can live. When the rendered description overflows, MediaBridge shrinks the upstream summary and keeps the credit rather than truncating the end.
+An article has no `originalLinkUrl` field, but its body is unbounded, so **attribution for an article lives in the body**: MediaBridge appends a 转载信息 block naming the author, the source link, the licence and the licence terms to every article it posts. That is not configurable — none of the article sources produce one themselves, and with the description now too small to carry a URL, an omitted block would be the difference between a credited repost and an uncredited copy. Keeping the link in the description as well used to cost 136 characters on a single `science.nasa.gov` URL, leaving 24 of the 200 for the summary; the description now carries only the 转载 marker and the author.
+
+When a rendered description still overflows, MediaBridge shrinks the upstream summary and keeps the credit rather than truncating the end. If the attribution alone will not fit, that is a broken `desc_template` and the submission fails with an error saying so, rather than quietly posting a repost with no credit on it.
 
 If you change a template — or discover another AcFun quirk — `mediabridge refresh` re-renders what is already in the ledger and puts it back through `updateArticle` rather than posting a duplicate. It keeps the original publish date, and if the cover cannot be re-fetched it reuses the one already on the article instead of blanking it. Video has no equivalent endpoint, so the video publisher refuses the operation rather than posting again.
 
@@ -186,8 +188,11 @@ If you still want it, YouTube is reachable through the plugin mechanism without 
 
 - **Disk.** GitHub-hosted runners guarantee only about 14 GB free. `limits.max_filesize_mb` defaults to 2000, and each item's working directory is deleted as soon as it has been published.
 - **Rate.** `max_items_per_run` defaults to 2. Publishing a burst of reposts is a good way to attract the wrong kind of attention to your account.
+- **Budget per channel.** Sources are visited in config-file order and nothing rotates, so a single global budget is spent by whichever sources are listed first. Once you mix video and article sources, set `limits.max_items_per_target` (keyed by `publish.target`, so `acfun_video` and `acfun_article`) or the kind listed second will never publish. `max_items_per_run` still caps the total, so raise it to at least the sum of the per-target caps — the run stops as soon as it is reached, and the shortfall comes out of whichever target is listed last. A source whose target is already spent is skipped before discovery, so it costs no upstream requests.
 - **State.** `state/published.json` is committed back to the repository after each run. `actions/cache` would be the obvious alternative, but it is evicted after seven days without a hit, which silently turns into republishing everything.
 - **Cookie lifetime.** AcFun sessions last roughly a month. `login-check` runs first in the workflow and fails in seconds if the session has lapsed, rather than after downloading gigabytes that could never be uploaded. A warning appears in the log when fewer than seven days remain.
+- **Transcoding is not part of submission.** `createDouga` hands back an id for a video AcFun cannot decode just as readily as for one it can, so the submission is polled for four minutes afterwards. A video still showing `转码失败` at the end of that is *not* written to the ledger: it would otherwise sit permanently broken on the account with its dedup key spent, and nothing would ever retry it. Delete the dead submission by hand — the id is in the run summary. A poll that simply could not be read is treated as success, because re-uploading a video that was probably fine is the more expensive mistake.
+- **Repeated failures.** Failures do not count against `max_items_per_source`, so a source that is broken in a systematic way would otherwise be handed candidate after candidate for the whole run. Three consecutive failures abandon that source until the next run.
 
 ## Development
 

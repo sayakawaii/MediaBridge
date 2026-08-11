@@ -67,6 +67,36 @@ def test_source_name_must_be_a_safe_identifier(tmp_path):
         load_config(_write(tmp_path, MINIMAL.replace("name: demo", "name: 'bad name/../'")))
 
 
+def test_per_target_budgets_are_loaded(tmp_path):
+    text = (
+        MINIMAL
+        + """
+limits:
+  max_items_per_run: 6
+  max_items_per_target:
+    acfun_video: 4
+    acfun_article: 2
+"""
+    )
+    limits = load_config(_write(tmp_path, text)).limits
+    assert limits.target_budget("acfun_video") == 4
+    assert limits.target_budget("acfun_article") == 2
+    assert limits.target_budget("acfun_unknown") is None
+
+
+def test_per_target_budgets_default_to_empty(tmp_path):
+    # An older config that predates the key must keep working unchanged.
+    limits = load_config(_write(tmp_path, MINIMAL)).limits
+    assert limits.max_items_per_target == {}
+    assert limits.target_budget("acfun_video") is None
+
+
+def test_non_integer_target_budget_is_rejected(tmp_path):
+    text = MINIMAL + "\nlimits:\n  max_items_per_target: {acfun_video: lots}\n"
+    with pytest.raises(ConfigError):
+        load_config(_write(tmp_path, text))
+
+
 def test_disabled_sources_are_excluded(tmp_path):
     config = load_config(
         _write(tmp_path, MINIMAL.replace("type: peertube", "type: peertube\n    enabled: false"))

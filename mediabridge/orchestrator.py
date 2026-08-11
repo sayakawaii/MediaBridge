@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -18,6 +19,14 @@ from .state import State
 from .utils.http import build_session
 
 log = logging.getLogger(__name__)
+
+#: Failures do not count against `max_items_per_source`, so a source that is
+#: systematically broken -- every description over AcFun's limit, a dead CDN --
+#: keeps being handed the next candidate. One such source once attempted six
+#: videos under `max_items_per_source: 1` and spent fifty minutes uploading
+#: files that were all rejected at submission. Three in a row is enough to call
+#: it: the fourth attempt has never been the one that worked.
+MAX_CONSECUTIVE_FAILURES = 3
 
 
 @dataclass
@@ -63,6 +72,8 @@ class Orchestrator:
         budget = max_items if max_items is not None else self.config.limits.max_items_per_run
         work_root = Path(self.config.work_dir)
 
+        spent_per_target: Counter[str] = Counter()
+
         for source_config in self.config.enabled_sources():
             if only and source_config.name not in only:
                 continue
@@ -70,8 +81,23 @@ class Orchestrator:
                 log.info("Reached max_items_per_run=%s; stopping.", budget)
                 break
 
-            remaining = None if budget is None else budget - self.report.published
+            target = source_config.publish.target
+            target_cap = self.config.limits.target_budget(target)
+            if target_cap is not None and spent_per_target[target] >= target_cap:
+                # Skipping here rather than inside _run_source matters: discovery
+                # costs upstream HTTP requests that would be thrown away.
+                log.info(
+                    "--- source '%s' skipped: target '%s' has spent its budget of %d ---",
+                    source_config.name,
+                    target,
+                    target_cap,
+                )
+                continue
+
+            remaining = self._remaining_for(target, budget, spent_per_target)
+            published_before = self.report.published
             self._run_source(source_config, work_root, remaining)
+            spent_per_target[target] += self.report.published - published_before
 
         if self.state.save():
             log.info("State written to %s", self.config.state_file)
@@ -80,6 +106,16 @@ class Orchestrator:
         for url in self.report.published_urls:
             log.info("  published -> %s", url)
         return self.report
+
+    def _remaining_for(self, target: str, budget: int | None, spent_per_target: Counter[str]) -> int | None:
+        """How many items this target may still publish, under both caps."""
+        caps = []
+        if budget is not None:
+            caps.append(budget - self.report.published)
+        target_cap = self.config.limits.target_budget(target)
+        if target_cap is not None:
+            caps.append(target_cap - spent_per_target[target])
+        return min(caps) if caps else None
 
     def refresh(self, only: list[str] | None = None, max_items: int | None = None) -> RunReport:
         """Re-render already-published items and re-submit them in place.
@@ -182,17 +218,30 @@ class Orchestrator:
 
         per_source = self.config.limits.max_items_per_source
         published_here = 0
+        consecutive_failures = 0
 
         for item in candidates:
             if remaining is not None and published_here >= remaining:
-                log.info("[%s] reached the run-wide item budget", source_config.name)
+                log.info("[%s] used up the item budget available to it", source_config.name)
                 return
             if per_source and published_here >= per_source:
                 log.info("[%s] reached max_items_per_source=%d", source_config.name, per_source)
                 return
 
+            failed_before = self.report.failed
             if self._process(item, source_config, work_root):
                 published_here += 1
+                consecutive_failures = 0
+            elif self.report.failed > failed_before:
+                consecutive_failures += 1
+                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                    log.error(
+                        "[%s] %d item(s) in a row failed; abandoning this source for the rest of "
+                        "the run rather than paying for more uploads that will not land.",
+                        source_config.name,
+                        consecutive_failures,
+                    )
+                    return
 
     def _process(self, item: MediaItem, source_config: SourceConfig, work_root: Path) -> bool:
         if self.state.is_published(item.dedup_key):

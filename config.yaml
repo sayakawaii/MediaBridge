@@ -18,9 +18,18 @@ limits:
   max_filesize_mb: 2000
   max_duration_sec: 3600
   min_duration_sec: 30
-  # With more sources enabled than slots per run, sources take turns rather
-  # than the first one in the file always winning.
-  max_items_per_run: 4
+  # Sources are visited in file order and there is no rotation, so a single
+  # global budget goes entirely to whoever is listed first. With six video
+  # sources ahead of three article ones, that meant the article sources were
+  # never reached at all. Budget each target separately instead.
+  max_items_per_target:
+    acfun_video: 4
+    # One slot per article source, so each of the three publishes every day.
+    acfun_article: 3
+  # Overall ceiling, applied on top of the per-target caps. Keep it at least
+  # the sum of those caps: the run stops the moment this is reached, and since
+  # video is listed first, anything lower is taken out of the article budget.
+  max_items_per_run: 7
   max_items_per_source: 1
 
 state_file: state/published.json
@@ -58,15 +67,19 @@ sources:
       creation_type: 1         # 1 = 转载, 3 = 原创
       tags: [Blender, 开源动画, 搬运]
       title_template: "【搬运】{title}"
+      # The 简介 is capped at 200 characters and the credit is what survives when
+      # it overflows, so keep the fixed text short: a Commons `File:` URL alone
+      # ran to 106 characters and pushed the attribution to 215. No
+      # `原始链接` here because `createDouga` carries the source in its own
+      # `originalLinkUrl` field for 转载 (creation_type 1), which every video
+      # source below is. Articles have no such field; they put the link in the
+      # article body instead, which has no length limit.
       desc_template: &repost_desc |
         {description}
 
-        ――――――――――
         本作品为转载，版权归原作者所有。
         原作者：{author}
-        原始链接：{webpage_url}
-        许可协议：{license}
-        由 MediaBridge 自动搬运。
+        许可：{license}
 
   - name: tilvids
     type: peertube
@@ -189,15 +202,18 @@ sources:
       creation_type: 1
       tags: [联合国, 国际, 资讯, 搬运]
       title_template: "{title}"
+      # `postArticle` has no `originalLinkUrl`, but its body is unbounded, so
+      # the article publisher appends the full credit -- link, licence and
+      # licence terms -- to the body of every article it posts. Keeping the URL
+      # here as well cost 136 characters on one nasa-news item and left 24 of
+      # the 200 for the summary, one longer NASA slug away from not publishing
+      # at all. The 简介 now carries only what a reader who never opens the
+      # article needs: that it is a repost, and whose work it is.
       desc_template: &article_desc |
         {description}
 
-        ――――――――――
-        本文为转载，版权归原作者所有。
-        来源：{author}
-        原始链接：{webpage_url}
-        许可说明：{license}
-        由 MediaBridge 自动搬运。
+        转载｜原作者：{author}
+        原始出处与许可见正文末尾。
 
   - name: usgs-quakes
     type: usgs

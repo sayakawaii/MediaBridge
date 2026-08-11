@@ -2,18 +2,31 @@
 
 from __future__ import annotations
 
+import logging
 import re
+
+from ..errors import ConfigError
 
 # AcFun's own editors enforce these; exceeding them gets the request rejected
 # with an unhelpful generic error, so we clamp client-side.
 MAX_TITLE_LEN = 50
-MAX_DESC_LEN = 1000
 
-#: Articles are far stricter than video: postArticle rejects anything longer
-#: with ``result=110014 描述信息不能超过200个汉字``.
+#: ``createDouga`` rejects a longer 简介 with ``result=109015 投稿失败：简介不能
+#: 超过200个字``, and the check is server-side *after* the whole file has been
+#: uploaded -- five over-long descriptions once burned fifty minutes of upload
+#: in a single scheduled run. The error message also comes back empty about
+#: half the time, so only the code is dependable, which is why this is clamped
+#: here rather than diagnosed from the response.
+MAX_VIDEO_DESC_LEN = 200
+
+#: ``postArticle`` rejects anything longer with ``result=110014 描述信息不能超过
+#: 200个汉字``. Kept separate from the video limit despite the shared value:
+#: they are independent server-side checks that have already disagreed once.
 MAX_ARTICLE_DESC_LEN = 200
 MAX_TAG_LEN = 20
 MAX_TAGS = 6
+
+log = logging.getLogger(__name__)
 
 _WHITESPACE = re.compile(r"[ \t\u00a0]+")
 _BLANK_LINES = re.compile(r"\n{3,}")
@@ -75,28 +88,44 @@ def render_within(template: str, values: dict[str, object], limit: int, flex_key
     """Render `template` to at most `limit` characters, shrinking `flex_key` first.
 
     Truncating the finished string would cut from the end, which is exactly
-    where a repost's attribution lives -- and for an AcFun article the
-    description is the *only* place it can live, since ``postArticle`` has no
-    ``originalLinkUrl`` field. So the upstream summary gives way instead, and
-    the credit survives.
+    where a repost's attribution lives -- the original author, the source link
+    and the licence, i.e. the whole of what makes a 转载 legitimate. So the
+    upstream summary gives way instead, and the credit survives.
     """
-    flex = str(values.get(flex_key) or "")
     rendered = collapse_whitespace(render_template(template, values))
+    if len(rendered) <= limit:
+        return rendered
+
+    attribution = collapse_whitespace(render_template(template, {**values, flex_key: ""}))
+    if len(attribution) > limit:
+        raise ConfigError(
+            f"desc_template renders to {len(attribution)} characters with no {{{flex_key}}} at all, "
+            f"over the {limit} the platform accepts. Shrinking the summary cannot bring it under, "
+            "and trimming the end would throw away the attribution.",
+            hint="Shorten the fixed text in publish.desc_template.",
+        )
+
+    log.warning(
+        "Description renders to %d characters, over the %d allowed; shortening the upstream "
+        "summary so the %d-character attribution survives.",
+        len(rendered),
+        limit,
+        len(attribution),
+    )
 
     # Shrink by the measured overflow rather than a computed budget: the
     # template's own separators collapse differently once the flexible value is
     # shorter, so the only reliable length is the one we just rendered.
+    flex = str(values.get(flex_key) or "")
     for _ in range(4):
         if len(rendered) <= limit:
             return rendered
-        if not flex:
-            break
         flex = truncate(flex, max(limit - (len(rendered) - len(flex)), 0))
         rendered = collapse_whitespace(render_template(template, {**values, flex_key: flex}))
 
-    # Even with no summary at all the boilerplate overflows; nothing left to
-    # protect, so fall back to a plain trim.
-    return truncate(rendered, limit)
+    # Converging on the exact budget is not worth a fifth render; dropping the
+    # summary entirely still leaves the credit, which is the part worth keeping.
+    return rendered if len(rendered) <= limit else attribution
 
 
 def normalise_tags(tags: list[str], limit: int = MAX_TAGS) -> list[str]:

@@ -22,6 +22,15 @@ limits:
   # and keeps a bad configuration from flooding your channel.
   max_items_per_run: 2
   max_items_per_source: 1
+  # Optional per-target caps. Sources are visited in file order with no
+  # rotation, so once you mix video and article sources a single global budget
+  # is spent by whichever kind is listed first and the other never publishes.
+  # `max_items_per_run` still applies as an overall ceiling, so raise it to at
+  # least the sum of the caps below or the kind listed last loses the shortfall.
+  # max_items_per_run: 7
+  # max_items_per_target:
+  #   acfun_video: 4
+  #   acfun_article: 3
 
 state_file: state/published.json
 work_dir: work
@@ -43,15 +52,18 @@ sources:
       creation_type: 1         # 1 = 转载, 3 = 原创
       tags: [Blender, 开源动画, 搬运]
       title_template: "【搬运】{title}"
-      desc_template: |
+      # The 简介 is capped at 200 characters and the credit is what survives when
+      # it overflows, so keep the fixed text short: some source URLs alone run
+      # past 100 characters. No `原始链接` here because `createDouga` carries the
+      # source in its own `originalLinkUrl` field for 转载 (creation_type 1).
+      # Articles have no such field; they put the link in the article body
+      # instead, which has no length limit.
+      desc_template: &repost_desc |
         {description}
 
-        ――――――――――
         本作品为转载，版权归原作者所有。
         原作者：{author}
-        原始链接：{webpage_url}
-        许可协议：{license}
-        由 MediaBridge 自动搬运。
+        许可：{license}
 
   - name: nasa-video
     type: nasa
@@ -65,6 +77,7 @@ sources:
       creation_type: 1
       tags: [NASA, 航天, 搬运]
       title_template: "【NASA】{title}"
+      desc_template: *repost_desc
 
   - name: internet-archive
     type: archive_org
@@ -80,6 +93,7 @@ sources:
       channel_id: 184
       creation_type: 1
       tags: [公有领域, 老片, 搬运]
+      desc_template: *repost_desc
 
   - name: wikimedia-commons
     type: wikimedia
@@ -92,6 +106,7 @@ sources:
       channel_id: 86
       creation_type: 1
       tags: [科普, 搬运]
+      desc_template: *repost_desc
 
   # Article channel (AcFun 专栏) rather than video. Horizon publishes one
   # AI-scored news digest per day; min_score trims a 70-item digest down to
@@ -122,15 +137,18 @@ sources:
       creation_type: 1
       tags: [科技, 资讯, 搬运]
       title_template: "{title}"
+      # `postArticle` has no `originalLinkUrl`, but its body is unbounded, so
+      # the article publisher appends the full credit -- link, licence and
+      # licence terms -- to the body of every article it posts. Keeping the URL
+      # here as well is what used to eat the 200 characters: news URLs of
+      # 130-odd characters are common, and one measured 136, leaving 24 for the
+      # summary. The 简介 now carries only what a reader who never opens the
+      # article needs: that it is a repost, and whose work it is.
       desc_template: &article_desc |
         {description}
 
-        ――――――――――
-        本文为转载，版权归原作者所有。
-        来源：{author}
-        原始链接：{webpage_url}
-        许可说明：{license}
-        由 MediaBridge 自动搬运。
+        转载｜原作者：{author}
+        原始出处与许可见正文末尾。
 
   # A generic RSS/Atom article source, so a new outlet is a config change
   # rather than a plugin. `license_name` is mandatory: a feed being public says

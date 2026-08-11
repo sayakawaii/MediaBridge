@@ -16,18 +16,21 @@ recovered from AcFun's own ``post-article`` webpack chunk.
     realmId        second-level realm
     supportZtEmot  true
 
-Unlike video submission there is no ``originalLinkUrl`` field, so attribution
-for a repost has to live in ``description``.
+Unlike video submission there is no ``originalLinkUrl`` field. ``detail`` is
+unbounded though, so the repost's credit goes in the body and the 200-character
+``description`` is spared having to carry a URL it cannot afford; see
+`build_body_attribution`.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from html import escape
 from urllib.parse import quote
 
 from ...errors import PublishError, SkipItem
-from ...models import FetchedMedia, PublishResult
+from ...models import FetchedMedia, MediaItem, PublishResult
 from ...utils.text import (
     MAX_ARTICLE_DESC_LEN,
     MAX_TITLE_LEN,
@@ -48,9 +51,48 @@ ARTICLE_COVER_BIZ_FLAG = "web-article-cover"
 # JavaScript's encodeURIComponent leaves exactly these unescaped.
 _JS_URI_SAFE = "-_.!~*'()"
 
+ATTRIBUTION_HEADING = "转载信息"
+
 
 def js_encode_uri_component(text: str) -> str:
     return quote(text, safe=_JS_URI_SAFE, encoding="utf-8")
+
+
+def build_body_attribution(item: MediaItem) -> str:
+    """The credit block appended to every article body.
+
+    None of the article sources produce one -- they hand over the upstream text
+    and nothing else -- so it is built here rather than left to each source to
+    remember, and it is not configurable: with the URL and the licence gone from
+    the 200-character 简介, deleting this block is the difference between a
+    credited repost and an uncredited copy.
+
+    Anchors do not survive AcFun's server-side sanitiser (see
+    `utils.acfun_html`), so every URL is written as plain visible text.
+    """
+    fields = [
+        ("原作者", item.author or "未知"),
+        ("原始链接", item.webpage_url),
+        ("许可协议", item.license or "见原始链接"),
+        ("许可说明", item.license_url),
+    ]
+    lines = [
+        "本文为转载，版权归原作者所有。",
+        *(f"{label}：{value}" for label, value in fields if value),
+        "由 MediaBridge 自动搬运。",
+    ]
+
+    return "".join(
+        [
+            "<hr/>",
+            f"<h3>{ATTRIBUTION_HEADING}</h3>",
+            *(f"<p>{escape(line)}</p>" for line in lines),
+        ]
+    )
+
+
+def body_with_attribution(item: MediaItem) -> str:
+    return item.body_html + build_body_attribution(item)
 
 
 class AcFunArticlePublisher(Publisher):
@@ -94,7 +136,7 @@ class AcFunArticlePublisher(Publisher):
             {
                 "orderId": 1,
                 "title": "",
-                "txt": js_encode_uri_component(item.body_html),
+                "txt": js_encode_uri_component(body_with_attribution(item)),
             }
         ]
         return {
@@ -125,7 +167,14 @@ class AcFunArticlePublisher(Publisher):
                 publish_config.channel_id,
                 publish_config.realm_id,
                 title,
-                len(item.body_html),
+                len(body_with_attribution(item)),
+            )
+            log.debug(
+                "[dry-run] 简介 (%d/%d):\n%s\n[dry-run] body:\n%s",
+                len(description),
+                MAX_ARTICLE_DESC_LEN,
+                description,
+                body_with_attribution(item),
             )
             return PublishResult(ok=True, dry_run=True, message="dry-run", url=item.webpage_url)
 
@@ -158,7 +207,7 @@ class AcFunArticlePublisher(Publisher):
                 "[dry-run] would update ac%s: %s (%d chars of HTML)",
                 remote_id,
                 title,
-                len(item.body_html),
+                len(body_with_attribution(item)),
             )
             return PublishResult(ok=True, dry_run=True, message="dry-run", remote_id=remote_id)
 

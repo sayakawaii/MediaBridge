@@ -12,7 +12,7 @@ from mediabridge.publishers.acfun.upload import (
     _upload_fragment,
     _upload_user_agent,
 )
-from mediabridge.publishers.acfun.video import verify_transcode
+from mediabridge.publishers.acfun.video import TranscodeOutcome, verify_transcode
 
 
 def test_redacts_upload_tokens_from_urls():
@@ -100,10 +100,10 @@ def test_a_lasting_transcode_failure_is_reported(monkeypatch, caplog):
     monkeypatch.setattr("mediabridge.publishers.acfun.video.VERIFY_TIMEOUT_SEC", 0.01)
     client = SimpleNamespace(post_form=lambda *a, **k: {"videoList": [{"sourceStatus": 2}]})
     with caplog.at_level("ERROR"):
-        assert verify_transcode(client, "123") == "转码失败"
+        assert verify_transcode(client, "123") == TranscodeOutcome("转码失败", failed=True)
     assert "will not play" in caplog.text
 
 
 def test_a_video_that_starts_transcoding_is_accepted():
     client = SimpleNamespace(post_form=lambda *a, **k: {"videoList": [{"sourceStatus": 3}]})
-    assert verify_transcode(client, "123") == "审核中"
+    assert verify_transcode(client, "123") == TranscodeOutcome("审核中")
