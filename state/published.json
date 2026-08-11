@@ -179,12 +179,39 @@
       "source_url": "https://images.nasa.gov/details/Artemis%20II%20Science%20-%20AVATAR%20Vertical%20Video",
       "title": "Artemis II Science - AVATAR Vertical Video"
     },
+    "tilvids:08acf25c-c60a-4b5a-b23a-3849559e4ca1": {
+      "published_at": "2026-08-11T04:23:17+00:00",
+      "remote_id": "48766890",
+      "remote_url": "https://www.acfun.cn/v/ac48766890",
+      "source_url": "https://tilvids.com/w/258QRuwLwpykoeLum4dhw6",
+      "title": "Arch under attack, Framework laptop 13 Pro looks good for Linux, GoG on Linux - Linux Weekly News",
+      "verification": "ok",
+      "verified_at": "2026-08-11T06:10:51+00:00"
+    },
+    "tilvids:1f4b9a99-f913-43cb-9186-79e1847c430f": {
+      "published_at": "2026-08-11T04:39:10+00:00",
+      "remote_id": "48766917",
+      "remote_url": "https://www.acfun.cn/v/ac48766917",
+      "source_url": "https://tilvids.com/w/4S97w3K2dAafDRVhL6p6Sx",
+      "title": "Egos ruining Open Source projects, distros vs software conflicts - Linux Weekly News",
+      "verification": "ok",
+      "verified_at": "2026-08-11T06:10:51+00:00"
+    },
     "tilvids:3660be6b-d1f9-4780-abab-249827e61a9d": {
       "published_at": "2026-08-07T05:18:28+00:00",
       "remote_id": "48757404",
       "remote_url": "https://www.acfun.cn/v/ac48757404",
       "source_url": "https://tilvids.com/w/7HsD6Yw7brxjnDHNW4v6ur",
       "title": "Buskill: a USB killswitch security key"
+    },
+    "tilvids:41c054e0-bf71-4b76-ac3f-387881f54d67": {
+      "published_at": "2026-08-11T04:09:08+00:00",
+      "remote_id": "48766867",
+      "remote_url": "https://www.acfun.cn/v/ac48766867",
+      "source_url": "https://tilvids.com/w/97Va9Pu7nXkRRX1ZiCGu1p",
+      "title": "Linux passes 10% market share? AI hijacking is the new SEO - Linux Weekly News",
+      "verification": "ok",
+      "verified_at": "2026-08-11T06:10:51+00:00"
     },
     "tilvids:b1652567-6288-45d8-8144-4c859635ad0c": {
       "published_at": "2026-08-08T03:53:42+00:00",
@@ -236,6 +263,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-11T04:48:10+00:00",
+  "updated_at": "2026-08-11T06:10:51+00:00",
   "version": 1
 }

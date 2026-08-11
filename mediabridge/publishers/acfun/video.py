@@ -11,14 +11,17 @@ Pipeline, as performed by AcFun's own web client:
 ``/video/api/uploadFinish`` is intentionally absent from the success path. The
 web client only calls it from ``catch`` blocks, passing ``errorCode`` /
 ``errorMsg``; it is failure telemetry, not a completion step.
+
+``createDouga`` returning a dougaId is not the end of the story -- AcFun then
+transcodes, and a file it cannot decode gets an id just as readily as one it
+can. That outcome is read back by `verify`, which the orchestrator calls at the
+start of a *later* run rather than inline here; see `Publisher.verify`.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import time
-from dataclasses import dataclass
 from pathlib import Path
 
 from ...errors import PublishError, SkipItem
@@ -32,7 +35,14 @@ from ...utils.text import (
     render_within,
     truncate,
 )
-from ..base import Publisher
+from ..base import (
+    VERIFY_FAILED,
+    VERIFY_OK,
+    VERIFY_PENDING,
+    VERIFY_REJECTED,
+    Publisher,
+    Verification,
+)
 from .client import UPLOAD_VIDEO_REFERER, AcFunClient
 from .upload import DEFAULT_PART_SIZE, upload_file
 
@@ -124,68 +134,20 @@ def upload_video_file(client: AcFunClient, video_path: Path) -> str:
 #: own bundle. Transcoding runs after submission, so a douga id in hand says
 #: nothing about whether the video will ever play.
 SOURCE_STATUS = {1: "转码中", 2: "转码失败", 3: "审核中", 4: "已退回", 5: "已上线", 6: "时长超限"}
+
+#: 2 is not only where a failed transcode lands: it is also where a submission
+#: waits before AcFun picks it up, and a 30-minute 1080p60 file waits there for
+#: well over the four minutes a run used to allow. Reading it as failure
+#: condemned three submissions that went on to transcode perfectly. It is only
+#: a verdict a day later, once nothing can still be queued.
 TRANSCODE_FAILED = 2
 
-VERIFY_TIMEOUT_SEC = 240
-VERIFY_INTERVAL_SEC = 15
+#: The file decoded and the submission moved on to moderation or to the site.
+TRANSCODE_DONE = frozenset({3, 5})
 
-
-@dataclass(frozen=True)
-class TranscodeOutcome:
-    """What the read-back saw, and whether it is bad enough to disown."""
-
-    status: str
-
-    failed: bool = False
-    """Only ever set by a *confirmed* failure, never by an unread submission.
-
-    Treating a lost poll as a failure would retry -- and so re-upload -- a video
-    that is in fact perfectly fine, which is the more expensive mistake.
-    """
-
-
-def verify_transcode(client: AcFunClient, douga_id: str) -> TranscodeOutcome:
-    """Watch a fresh submission until it leaves the pre-transcode state.
-
-    ``createDouga`` returns an id for a video AcFun cannot decode just as
-    readily as for one it can, so without this a broken upload looks exactly
-    like a good one until somebody opens the page days later.
-    """
-    deadline = time.monotonic() + VERIFY_TIMEOUT_SEC
-    status = None
-    while time.monotonic() < deadline:
-        try:
-            info = client.post_form("/video/api/getDougaInfo", {"dougaId": str(douga_id)})
-        except PublishError as exc:  # a lost poll must not fail a good submission
-            log.debug("Could not read back ac%s: %s", douga_id, exc)
-            return TranscodeOutcome("unknown")
-
-        videos = info.get("videoList") or []
-        status = videos[0].get("sourceStatus") if videos else None
-        # 2 is also where a submission sits before transcoding picks it up, so
-        # only a lasting 2 means failure -- hence waiting rather than sampling.
-        if status is not None and status != TRANSCODE_FAILED:
-            log.info("ac%s transcoded: %s", douga_id, SOURCE_STATUS.get(status, status))
-            return TranscodeOutcome(SOURCE_STATUS.get(status, str(status)))
-        time.sleep(VERIFY_INTERVAL_SEC)
-
-    if status != TRANSCODE_FAILED:
-        log.warning(
-            "ac%s reported no transcode status within %ds; assuming the read-back is at fault "
-            "rather than the video.",
-            douga_id,
-            VERIFY_TIMEOUT_SEC,
-        )
-        return TranscodeOutcome("unknown")
-
-    log.error(
-        "ac%s is still '%s' after %ds. The submission exists but the video will not play, so it "
-        "is not being recorded as published; a later run will try it again.",
-        douga_id,
-        SOURCE_STATUS[TRANSCODE_FAILED],
-        VERIFY_TIMEOUT_SEC,
-    )
-    return TranscodeOutcome(SOURCE_STATUS[TRANSCODE_FAILED], failed=True)
+#: Terminal, but re-uploading the same bytes would only reproduce it, so these
+#: keep their dedup key rather than being handed back for a retry.
+TRANSCODE_REFUSED = frozenset({4, 6})
 
 
 def _report_failure(client: AcFunClient, task_id: str, exc: Exception) -> None:
@@ -287,18 +249,39 @@ class AcFunVideoPublisher(Publisher):
         url = f"https://www.acfun.cn/v/ac{douga_id}"
         log.info("Published: %s -> %s", fields["title"], url)
 
-        outcome = verify_transcode(client, str(douga_id))
-        if outcome.failed:
-            # Reported rather than raised so the id and URL of the dead
-            # submission reach the run summary; the orchestrator keeps a
-            # not-ok result out of the ledger, which is what allows a retry.
-            return PublishResult(
-                ok=False,
-                remote_id=str(douga_id),
-                url=url,
-                message=f"submitted but AcFun could not transcode it ({outcome.status}); "
-                f"delete ac{douga_id} by hand",
-            )
+        # AcFun transcodes after this returns, and how long that takes scales
+        # with the file: minutes for a three-minute clip, far longer for half an
+        # hour of 1080p60. Waiting here bought a guess; the next run gets a fact.
         return PublishResult(
-            ok=True, remote_id=str(douga_id), url=url, message=f"submitted for review ({outcome.status})"
+            ok=True,
+            remote_id=str(douga_id),
+            url=url,
+            pending_verification=True,
+            message="submitted; the transcode outcome is checked by the next run",
         )
+
+    def verify(self, remote_id: str) -> Verification:
+        """Ask what became of ac``remote_id``, submitted by an earlier run.
+
+        Only a status this build understands *as* an outcome counts as one.
+        Anything else -- a lost poll, an empty ``videoList``, a code added to
+        AcFun's enum since this was written -- is left unresolved for the run
+        after, because the expensive mistake here is condemning a good video.
+        """
+        try:
+            info = self.ctx.acfun().post_form("/video/api/getDougaInfo", {"dougaId": str(remote_id)})
+        except PublishError as exc:
+            return Verification(VERIFY_PENDING, f"could not be read back: {exc}")
+
+        videos = info.get("videoList") or []
+        status = videos[0].get("sourceStatus") if videos else None
+        label = SOURCE_STATUS.get(status, f"sourceStatus={status}")
+
+        if status in TRANSCODE_DONE:
+            return Verification(VERIFY_OK, label)
+        if status in TRANSCODE_REFUSED:
+            return Verification(VERIFY_REJECTED, label)
+        if status == TRANSCODE_FAILED:
+            return Verification(VERIFY_FAILED, label)
+        # 1 转码中 among others: still working, however unlikely that is by now.
+        return Verification(VERIFY_PENDING, label)

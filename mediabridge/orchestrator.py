@@ -6,6 +6,7 @@ import logging
 import shutil
 from collections import Counter
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .config import Config, SourceConfig
@@ -13,7 +14,14 @@ from .errors import FetchError, MediaBridgeError, PublishError, SkipItem, Source
 from .fetchers.base import fetch
 from .filters import limits as limit_filter
 from .models import FetchedMedia, MediaItem
-from .publishers.base import PublishContext, build_publisher
+from .publishers.base import (
+    VERIFY_FAILED,
+    VERIFY_OK,
+    VERIFY_PENDING,
+    VERIFY_REJECTED,
+    PublishContext,
+    build_publisher,
+)
 from .sources.registry import build_source
 from .state import State
 from .utils.http import build_session
@@ -28,6 +36,21 @@ log = logging.getLogger(__name__)
 #: it: the fourth attempt has never been the one that worked.
 MAX_CONSECUTIVE_FAILURES = 3
 
+#: Leave a submission alone for this long before asking what became of it.
+#: Runs are a day apart so this normally costs nothing, but two runs in one
+#: afternoon must not let the second one condemn what the first submitted --
+#: that is the mistake deferring the check exists to avoid.
+VERIFY_MIN_AGE = timedelta(hours=6)
+
+#: Stop asking after this long. Something that has neither succeeded nor failed
+#: in a week is not going to resolve itself, and the pending list has to be
+#: bounded or a platform that stops answering grows it forever.
+VERIFY_GIVE_UP_AFTER = timedelta(days=7)
+
+#: Written into the ledger for an entry that ran out of that patience. Not a
+#: failure -- the submission may well be fine -- just no longer worth asking.
+VERIFY_ABANDONED = "abandoned"
+
 
 @dataclass
 class RunReport:
@@ -36,8 +59,19 @@ class RunReport:
     skipped_filtered: int = 0
     published: int = 0
     failed: int = 0
+    verified: int = 0
     published_urls: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
+
+    verification_failures: list[str] = field(default_factory=list)
+    """Submissions an *earlier* run made that the platform then threw out.
+
+    Kept apart from `failures` deliberately. They do not fail this run: the
+    item's dedup key has already been released, so the retry is automatic and
+    the only outstanding action is a human deleting the dead submission, which
+    the log names. Failing the job for that would make every run after a bad
+    one red for something already handled.
+    """
 
     @property
     def exit_code(self) -> int:
@@ -48,7 +82,8 @@ class RunReport:
     def summary(self) -> str:
         return (
             f"discovered={self.discovered} published={self.published} "
-            f"duplicate={self.skipped_duplicate} filtered={self.skipped_filtered} failed={self.failed}"
+            f"duplicate={self.skipped_duplicate} filtered={self.skipped_filtered} "
+            f"failed={self.failed} verified={self.verified}"
         )
 
 
@@ -68,6 +103,7 @@ class Orchestrator:
 
     def run(self, only: list[str] | None = None, max_items: int | None = None) -> RunReport:
         self.state.load()
+        self.verify_pending()
 
         budget = max_items if max_items is not None else self.config.limits.max_items_per_run
         work_root = Path(self.config.work_dir)
@@ -106,6 +142,95 @@ class Orchestrator:
         for url in self.report.published_urls:
             log.info("  published -> %s", url)
         return self.report
+
+    # ---- Deferred verification ------------------------------------------
+
+    def verify_pending(self) -> None:
+        """Settle submissions earlier runs made but could not judge.
+
+        AcFun keeps transcoding long after ``createDouga`` returns, and how long
+        depends on the file: a three-minute clip is done in seconds, half an
+        hour of 1080p60 is not. A run used to wait four minutes and read "still
+        queued" as "failed", which threw away three perfectly good submissions
+        in a single morning. By the next run the queue has had a day to drain,
+        so the same question has an answer worth acting on and costs one HTTP
+        request per outstanding item instead of four minutes each.
+        """
+        pending = self.state.pending_verification()
+        if not pending:
+            return
+        if self.dry_run:
+            log.info("[dry-run] would check %d submission(s) awaiting verification", len(pending))
+            return
+
+        log.info("--- checking %d submission(s) awaiting verification ---", len(pending))
+        targets = {source.name: source.publish.target for source in self.config.sources}
+        now = datetime.now(timezone.utc)
+
+        for key, entry in pending:
+            try:
+                self._verify_one(key, entry, targets, now)
+            except Exception as exc:  # noqa: BLE001 - a check-up must never break the run
+                log.warning("Could not verify %s: %s; will ask again next run", key, exc)
+
+    def _verify_one(self, key: str, entry: dict, targets: dict[str, str], now: datetime) -> None:
+        remote_id = str(entry.get("remote_id") or "")
+        label = f"{key} -> ac{remote_id}" if remote_id else key
+        age = _age_of(entry.get("published_at"), now)
+
+        if not remote_id or age is None or age > VERIFY_GIVE_UP_AFTER:
+            # Without an id or a plausible age there is nothing to ask about,
+            # and after a week the answer has stopped being interesting. Either
+            # way it stays published; it just leaves the queue.
+            log.warning("Giving up on verifying %s; leaving it recorded as published", label)
+            self.state.resolve_verification(key, VERIFY_ABANDONED)
+            return
+
+        if age < VERIFY_MIN_AGE:
+            log.debug("%s is only %s old; too early to judge", label, _hours(age))
+            return
+
+        target = targets.get(key.split(":", 1)[0])
+        if target is None:
+            log.debug("%s belongs to a source no longer configured; cannot verify it", label)
+            return
+
+        publisher = build_publisher(target, self.ctx)
+        outcome = publisher.verify(remote_id)
+
+        if outcome.state == VERIFY_PENDING:
+            log.info("%s is still unresolved after %s (%s)", label, _hours(age), outcome.detail)
+            return
+
+        self.state.resolve_verification(key, outcome.state)
+        if outcome.state == VERIFY_OK:
+            self.report.verified += 1
+            log.info("%s verified: %s", label, outcome.detail)
+            return
+
+        url = entry.get("remote_url") or f"https://www.acfun.cn/v/ac{remote_id}"
+        if outcome.state == VERIFY_REJECTED:
+            # Nothing to retry -- the same file would be refused again -- so the
+            # entry stays and a human decides what to do with the submission.
+            log.error("%s was refused by the platform (%s): %s", label, outcome.detail, url)
+            self.report.verification_failures.append(f"ac{remote_id} refused ({outcome.detail}): {url}")
+            return
+
+        if outcome.state == VERIFY_FAILED:
+            self.state.release(key)
+            log.error(
+                "%s still reports '%s' %s after it was submitted, so the video will never play. "
+                "Delete ac%s by hand: %s. Its dedup key has been released, so a later run will "
+                "try the item again.",
+                label,
+                outcome.detail,
+                _hours(age),
+                remote_id,
+                url,
+            )
+            self.report.verification_failures.append(
+                f"ac{remote_id} failed to transcode ({outcome.detail}); delete it by hand: {url}"
+            )
 
     def _remaining_for(self, target: str, budget: int | None, spent_per_target: Counter[str]) -> int | None:
         """How many items this target may still publish, under both caps."""
@@ -298,3 +423,20 @@ class Orchestrator:
 
 def _slug(value: str) -> str:
     return "".join(c if c.isalnum() or c in "-_" else "_" for c in value)[:64] or "item"
+
+
+def _age_of(stamp: object, now: datetime) -> timedelta | None:
+    """How long ago `stamp` was, or None when it cannot be read as a time."""
+    if not isinstance(stamp, str) or not stamp:
+        return None
+    try:
+        when = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return now - when
+
+
+def _hours(age: timedelta) -> str:
+    return f"{age.total_seconds() / 3600:.0f}h"

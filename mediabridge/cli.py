@@ -107,6 +107,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     _write_job_summary(report)
     for failure in report.failures:
         log.error("failure: %s", failure)
+    for failure in report.verification_failures:
+        log.error("needs deleting by hand: %s", failure)
     return report.exit_code
 
 
@@ -215,11 +217,20 @@ def _write_job_summary(report) -> None:
         f"- duplicates skipped: {report.skipped_duplicate}",
         f"- filtered out: {report.skipped_filtered}",
         f"- failed: {report.failed}",
+        f"- verified from earlier runs: {report.verified}",
     ]
     if report.published_urls:
         lines += ["", "### Published", *(f"- {url}" for url in report.published_urls)]
     if report.failures:
         lines += ["", "### Failures", *(f"- {failure}" for failure in report.failures)]
+    if report.verification_failures:
+        # Submitted by an earlier run and thrown out afterwards: already retried
+        # automatically, but the dead submission needs deleting by hand.
+        lines += [
+            "",
+            "### Submitted earlier, then rejected by AcFun",
+            *(f"- {failure}" for failure in report.verification_failures),
+        ]
 
     try:
         with Path(summary_path).open("a", encoding="utf-8") as handle:

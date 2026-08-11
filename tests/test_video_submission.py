@@ -1,11 +1,17 @@
 """Video submission: the description limit and the transcode read-back.
 
-Both exist because of one scheduled run. Five `tilvids` videos in a row were
-downloaded, uploaded in full, and only then rejected by `createDouga` with
-`result=109015 投稿失败：简介不能超过200个字` -- about fifty minutes of upload
-thrown away, because the length check is server-side and runs last. The same
-run recorded a video AcFun had failed to transcode as successfully published,
-so it could never be retried.
+Both exist because of scheduled runs that went wrong. Five `tilvids` videos in
+a row were downloaded, uploaded in full, and only then rejected by
+`createDouga` with `result=109015 投稿失败：简介不能超过200个字` -- about fifty
+minutes of upload thrown away, because the length check is server-side and runs
+last.
+
+The read-back then went wrong in the opposite direction. It waited four minutes
+for the submission to leave `sourceStatus` 2 and called anything still there a
+transcode failure, but 2 is also where a submission queues, and three
+half-hour 1080p60 videos were condemned in one morning for the crime of being
+big. All three had transcoded by the time anyone looked. Verification now
+happens on the following run, and the publisher makes no judgement at all.
 """
 
 from __future__ import annotations
@@ -18,6 +24,12 @@ from mediabridge.models import FetchedMedia, MediaItem, PublishResult
 from mediabridge.orchestrator import MAX_CONSECUTIVE_FAILURES, Orchestrator
 from mediabridge.publishers.acfun import video as video_module
 from mediabridge.publishers.acfun.video import AcFunVideoPublisher
+from mediabridge.publishers.base import (
+    VERIFY_FAILED,
+    VERIFY_OK,
+    VERIFY_PENDING,
+    VERIFY_REJECTED,
+)
 from mediabridge.utils.text import (
     MAX_VIDEO_DESC_LEN,
     collapse_whitespace,
@@ -95,12 +107,10 @@ def _item(description: str = LONG_DESCRIPTION) -> MediaItem:
     )
 
 
-def submit(monkeypatch, tmp_path, item, responses=None):
-    """Publish `item` with the upload stages stubbed out, returning the payload."""
+def publish(monkeypatch, tmp_path, item, responses=None):
+    """Publish `item` with the upload stages stubbed out, returning the client too."""
     monkeypatch.setattr(video_module, "upload_video_file", lambda client, path: "video-1")
     monkeypatch.setattr(video_module, "upload_cover", lambda client, path: "https://cdn.example/c.jpg")
-    monkeypatch.setattr(video_module.time, "sleep", lambda _s: None)
-    monkeypatch.setattr(video_module, "VERIFY_TIMEOUT_SEC", 0.01)
 
     for name in ("video.mp4", "cover.jpg"):
         (tmp_path / name).write_bytes(b"\0")
@@ -113,7 +123,12 @@ def submit(monkeypatch, tmp_path, item, responses=None):
         }
     )
     fetched = FetchedMedia(item=item, video_path=tmp_path / "video.mp4", cover_path=tmp_path / "cover.jpg")
-    result = AcFunVideoPublisher(_Ctx(client)).publish(fetched, _Publish())
+    return AcFunVideoPublisher(_Ctx(client)).publish(fetched, _Publish()), client
+
+
+def submit(monkeypatch, tmp_path, item, responses=None):
+    """As `publish`, but returning the payload `createDouga` was sent."""
+    result, client = publish(monkeypatch, tmp_path, item, responses)
     return result, client.payload_for("/video/api/createDouga")
 
 
@@ -181,40 +196,78 @@ def test_the_video_limit_matches_what_createdouga_enforces():
 
 # --------------------------------------------------------------------------
 # Transcode verification
+#
+# It no longer happens here. `createDouga` returning an id ends the publisher's
+# involvement; what AcFun made of the file is read back by a later run, where
+# "still queued" and "failed" are finally distinguishable.
 # --------------------------------------------------------------------------
 
 
-def test_a_confirmed_transcode_failure_is_not_a_successful_publish(monkeypatch, tmp_path):
-    result, _ = submit(
-        monkeypatch,
-        tmp_path,
-        _item(),
-        responses={"/video/api/getDougaInfo": {"videoList": [{"sourceStatus": 2}]}},
-    )
-    assert result.ok is False
-    # The id still travels back so the operator can go and delete the corpse.
+def test_an_accepted_submission_is_published_and_left_to_be_verified(monkeypatch, tmp_path):
+    result, _ = submit(monkeypatch, tmp_path, _item())
+    assert result.ok is True
     assert result.remote_id == "48762123"
-    assert "ac48762123" in result.message
+    assert result.pending_verification is True
 
 
-def test_an_unreadable_status_is_still_a_successful_publish(monkeypatch, tmp_path):
-    # The poll failing says nothing about the video; retrying would re-upload a
-    # file that is probably fine.
-    result, _ = submit(
-        monkeypatch,
-        tmp_path,
-        _item(),
-        responses={"/video/api/getDougaInfo": PublishError("gateway timeout")},
-    )
-    assert result.ok is True
-    assert "unknown" in result.message
+def test_publishing_does_not_poll_the_transcode_status(monkeypatch, tmp_path):
+    # The four-minute wait this replaces cost twelve minutes of one run and
+    # condemned three videos that had transcoded perfectly by the next morning.
+    _result, client = publish(monkeypatch, tmp_path, _item())
+    assert "/video/api/getDougaInfo" not in [path for path, _data in client.calls]
 
 
-def test_an_empty_video_list_is_not_read_as_a_failure(monkeypatch, tmp_path):
-    result, _ = submit(
-        monkeypatch, tmp_path, _item(), responses={"/video/api/getDougaInfo": {"videoList": []}}
-    )
-    assert result.ok is True
+def verify_with(status, *, calls=None):
+    """Ask the publisher what became of ac48762123, given a `sourceStatus`."""
+    response = status if isinstance(status, (Exception, dict)) else {"videoList": [{"sourceStatus": status}]}
+    client = _FakeClient({"/video/api/getDougaInfo": response})
+    outcome = AcFunVideoPublisher(_Ctx(client)).verify("48762123")
+    if calls is not None:
+        calls.extend(client.calls)
+    return outcome
+
+
+@pytest.mark.parametrize(("status", "label"), [(3, "审核中"), (5, "已上线")])
+def test_a_transcoded_submission_verifies(status, label):
+    outcome = verify_with(status)
+    assert outcome.state == VERIFY_OK
+    assert outcome.detail == label
+
+
+def test_a_lasting_transcode_failure_is_a_failure_once_it_is_asked_a_day_later():
+    outcome = verify_with(2)
+    assert outcome.state == VERIFY_FAILED
+    assert outcome.detail == "转码失败"
+
+
+@pytest.mark.parametrize("status", [4, 6])
+def test_a_submission_acfun_refused_is_not_offered_for_retry(status):
+    # 已退回 and 时长超限 are terminal, and re-uploading the same file would only
+    # reproduce them, so these must not release the dedup key.
+    assert verify_with(status).state == VERIFY_REJECTED
+
+
+def test_a_status_still_in_progress_stays_unresolved():
+    assert verify_with(1).state == VERIFY_PENDING
+
+
+def test_a_status_this_build_does_not_know_stays_unresolved():
+    # A code added to AcFun's enum later must not be read as a verdict.
+    outcome = verify_with(99)
+    assert outcome.state == VERIFY_PENDING
+    assert "99" in outcome.detail
+
+
+def test_an_empty_video_list_stays_unresolved():
+    assert verify_with({"videoList": []}).state == VERIFY_PENDING
+
+
+def test_an_unreadable_read_back_stays_unresolved():
+    # The poll failing says nothing about the video; treating it as failure
+    # would re-upload a file that is probably fine.
+    outcome = verify_with(PublishError("gateway timeout"))
+    assert outcome.state == VERIFY_PENDING
+    assert "gateway timeout" in outcome.detail
 
 
 # --------------------------------------------------------------------------

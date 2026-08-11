@@ -99,3 +99,12 @@ class PublishResult:
     url: str = ""
     message: str = ""
     dry_run: bool = False
+
+    pending_verification: bool = False
+    """The platform accepted the submission but has not finished processing it.
+
+    Set by publishers whose destination keeps working after the API call
+    returns -- AcFun transcodes for minutes to tens of minutes afterwards. The
+    item is published as far as this run is concerned; a later run asks how it
+    turned out, when the answer is unambiguous.
+    """

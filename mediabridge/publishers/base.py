@@ -22,6 +22,32 @@ if TYPE_CHECKING:  # pragma: no cover
 
 log = logging.getLogger(__name__)
 
+#: The submission finished processing and is now the platform's problem.
+VERIFY_OK = "ok"
+
+#: The platform could not process what we sent. The item is worth retrying, so
+#: the dedup key is released and the dead submission named for deletion.
+VERIFY_FAILED = "failed"
+
+#: The platform processed the file and then refused the submission for a reason
+#: re-uploading the same bytes would only repeat. Kept out of the retry path.
+VERIFY_REJECTED = "rejected"
+
+#: Nothing conclusive yet. Never a verdict: a later run asks again.
+VERIFY_PENDING = "pending"
+
+
+@dataclass(frozen=True)
+class Verification:
+    """What a later run found out about a submission an earlier one made."""
+
+    state: str
+    detail: str = ""
+
+    @property
+    def resolved(self) -> bool:
+        return self.state != VERIFY_PENDING
+
 
 @dataclass
 class PublishContext:
@@ -77,6 +103,15 @@ class Publisher(ABC):
         Optional: a publisher with nothing to check should not be forced to
         write an empty override.
         """
+
+    def verify(self, remote_id: str) -> Verification:
+        """Report what became of a submission made by an earlier run.
+
+        Only ever called for results that set `PublishResult.pending_verification`,
+        so a platform that has finished with an item by the time `publish`
+        returns need not implement it.
+        """
+        return Verification(VERIFY_OK, "nothing to verify")
 
     def republish(
         self, fetched: FetchedMedia, publish_config: PublishConfig, remote_id: str
