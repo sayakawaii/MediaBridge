@@ -144,6 +144,20 @@
       "source_url": "https://makertube.net/w/o8UACWwyYUKNvrJkMj82ed",
       "title": "🟣Da Maker Lounge: C-F-G boogie (2026-08-07)"
     },
+    "makertube:b43142eb-c6cd-4133-b950-93e14c6a56d5": {
+      "published_at": "2026-08-11T04:45:22+00:00",
+      "remote_id": "48766926",
+      "remote_url": "https://www.acfun.cn/v/ac48766926",
+      "source_url": "https://makertube.net/w/ofy8hxXr4VD8e5Vqz4Qz2F",
+      "title": "Strudel REPL live coding acid techno from scratch"
+    },
+    "nasa-news:https://science.nasa.gov/earth/earth-observatory/bountiful-roebuck-bay/": {
+      "published_at": "2026-08-11T04:48:10+00:00",
+      "remote_id": "48766941",
+      "remote_url": "https://www.acfun.cn/a/ac48766941",
+      "source_url": "https://science.nasa.gov/earth/earth-observatory/bountiful-roebuck-bay/",
+      "title": "Bountiful Roebuck Bay"
+    },
     "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
       "published_at": "2026-08-09T05:12:18+00:00",
       "remote_id": "48762140",
@@ -193,14 +207,35 @@
       "source_url": "https://tilvids.com/w/xAC6urYo6WR5wDzcxyzJVS",
       "title": "pantheon"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142611": {
+      "published_at": "2026-08-11T04:48:04+00:00",
+      "remote_id": "48766939",
+      "remote_url": "https://www.acfun.cn/a/ac48766939",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142611",
+      "title": "哥伦比亚再次发生强烈地震，联合国提供援助"
+    },
+    "usgs-quakes:usgs-4.5-week-20260811": {
+      "published_at": "2026-08-11T04:48:06+00:00",
+      "remote_id": "48766940",
+      "remote_url": "https://www.acfun.cn/a/ac48766940",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
+      "title": "全球地震观测：过去一周记录到 32 次，最强 M7.4"
+    },
     "wikimedia-commons:10703553": {
       "published_at": "2026-08-10T04:25:19+00:00",
       "remote_id": "48764120",
       "remote_url": "https://www.acfun.cn/v/ac48764120",
       "source_url": "https://commons.wikimedia.org/wiki/File:NASA_Team_Captures_Hayabusa_Spacecraft_Reentry.ogv",
       "title": "NASA Team Captures Hayabusa Spacecraft Reentry"
+    },
+    "wikimedia-commons:18464230": {
+      "published_at": "2026-08-11T04:48:03+00:00",
+      "remote_id": "48766934",
+      "remote_url": "https://www.acfun.cn/v/ac48766934",
+      "source_url": "https://commons.wikimedia.org/wiki/File:NASA_Spacecraft_Reveals_Recent_Geological_Activity_on_the_Moon.ogv",
+      "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-10T04:25:19+00:00",
+  "updated_at": "2026-08-11T04:48:10+00:00",
   "version": 1
 }
