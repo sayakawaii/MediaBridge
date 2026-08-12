@@ -137,6 +137,14 @@
       "source_url": "https://makertube.net/w/atzh2dnLZwixGaFmzkDjiu",
       "title": "Live from \"Da Maker Lounge\" 🟣🎹🛠️🔵 - 8/6/2026, 11:01:16 PM"
     },
+    "makertube:582bd0bb-a4e4-41a0-a212-2c5ed4ece5dc": {
+      "published_at": "2026-08-12T04:30:07+00:00",
+      "remote_id": "48769768",
+      "remote_url": "https://www.acfun.cn/v/ac48769768",
+      "source_url": "https://makertube.net/w/bTuoESNN1F3DunRKEUCFNm",
+      "title": "Running Out of Time",
+      "verification": "pending"
+    },
     "makertube:b343abcb-cd0e-46ae-b1c2-496233404a3a": {
       "published_at": "2026-08-08T03:56:13+00:00",
       "remote_id": "48759698",
@@ -157,6 +165,13 @@
       "remote_url": "https://www.acfun.cn/a/ac48766941",
       "source_url": "https://science.nasa.gov/earth/earth-observatory/bountiful-roebuck-bay/",
       "title": "Bountiful Roebuck Bay"
+    },
+    "nasa-news:https://www.nasa.gov/?p=1034818": {
+      "published_at": "2026-08-12T04:30:52+00:00",
+      "remote_id": "48769772",
+      "remote_url": "https://www.acfun.cn/a/ac48769772",
+      "source_url": "https://www.nasa.gov/learning-resources/for-kids-and-students/what-is-the-nancy-grace-roman-space-telescope-grades-5-8/",
+      "title": "What Is the Nancy Grace Roman Space Telescope? (Grades 5-8)"
     },
     "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
       "published_at": "2026-08-09T05:12:18+00:00",
@@ -187,6 +202,14 @@
       "title": "Arch under attack, Framework laptop 13 Pro looks good for Linux, GoG on Linux - Linux Weekly News",
       "verification": "ok",
       "verified_at": "2026-08-11T06:10:51+00:00"
+    },
+    "tilvids:0fe64a99-7de0-4651-a1c1-910d96f1b15f": {
+      "published_at": "2026-08-12T04:29:02+00:00",
+      "remote_id": "48769767",
+      "remote_url": "https://www.acfun.cn/v/ac48769767",
+      "source_url": "https://tilvids.com/w/2XSGD337jPkB2fAwz8fCDM",
+      "title": "Linux Distros need to stop shipping outdated, unsupported applications",
+      "verification": "pending"
     },
     "tilvids:1f4b9a99-f913-43cb-9186-79e1847c430f": {
       "published_at": "2026-08-11T04:39:10+00:00",
@@ -241,6 +264,13 @@
       "source_url": "https://news.un.org/zh/story/2026/08/1142611",
       "title": "哥伦比亚再次发生强烈地震，联合国提供援助"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142615": {
+      "published_at": "2026-08-12T04:30:43+00:00",
+      "remote_id": "48769769",
+      "remote_url": "https://www.acfun.cn/a/ac48769769",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142615",
+      "title": "缅甸：联合国调查人员记录了军方对平民的蓄意袭击"
+    },
     "usgs-quakes:usgs-4.5-week-20260811": {
       "published_at": "2026-08-11T04:48:06+00:00",
       "remote_id": "48766940",
@@ -263,6 +293,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-11T06:10:51+00:00",
+  "updated_at": "2026-08-12T04:30:52+00:00",
   "version": 1
 }
