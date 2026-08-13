@@ -123,6 +123,14 @@
       "source_url": "https://makertube.net/w/8tZsAN12oueMqvcJ3vmejX",
       "title": "ICE 4 verlässt Zürich – 8 Stunden bis Hamburg"
     },
+    "makertube:47106b5e-be59-4bcb-9233-a1b78b4f864e": {
+      "published_at": "2026-08-13T04:33:42+00:00",
+      "remote_id": "48772499",
+      "remote_url": "https://www.acfun.cn/v/ac48772499",
+      "source_url": "https://makertube.net/w/9LY7SCNqFN7Q7coXEXrN9N",
+      "title": "Wood Ducks",
+      "verification": "pending"
+    },
     "makertube:4b401c5a-e7b2-4960-b01b-5bc9ce3add3e": {
       "published_at": "2026-08-10T04:18:39+00:00",
       "remote_id": "48764100",
@@ -143,7 +151,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48769768",
       "source_url": "https://makertube.net/w/bTuoESNN1F3DunRKEUCFNm",
       "title": "Running Out of Time",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-13T04:26:30+00:00"
     },
     "makertube:b343abcb-cd0e-46ae-b1c2-496233404a3a": {
       "published_at": "2026-08-08T03:56:13+00:00",
@@ -172,6 +181,13 @@
       "remote_url": "https://www.acfun.cn/a/ac48769772",
       "source_url": "https://www.nasa.gov/learning-resources/for-kids-and-students/what-is-the-nancy-grace-roman-space-telescope-grades-5-8/",
       "title": "What Is the Nancy Grace Roman Space Telescope? (Grades 5-8)"
+    },
+    "nasa-news:https://www.nasa.gov/?p=1036600": {
+      "published_at": "2026-08-13T04:34:25+00:00",
+      "remote_id": "48772504",
+      "remote_url": "https://www.acfun.cn/a/ac48772504",
+      "source_url": "https://www.nasa.gov/technology/tech-transfer-spinoffs/nasa-data-helps-commercial-space-plan-living-off-our-moon/",
+      "title": "NASA Data Helps Commercial Space Plan Living Off Our Moon"
     },
     "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
       "published_at": "2026-08-09T05:12:18+00:00",
@@ -209,7 +225,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48769767",
       "source_url": "https://tilvids.com/w/2XSGD337jPkB2fAwz8fCDM",
       "title": "Linux Distros need to stop shipping outdated, unsupported applications",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-13T04:26:31+00:00"
     },
     "tilvids:1f4b9a99-f913-43cb-9186-79e1847c430f": {
       "published_at": "2026-08-11T04:39:10+00:00",
@@ -219,6 +236,14 @@
       "title": "Egos ruining Open Source projects, distros vs software conflicts - Linux Weekly News",
       "verification": "ok",
       "verified_at": "2026-08-11T06:10:51+00:00"
+    },
+    "tilvids:2167fc7b-5eb2-4e99-bc34-ee3d4fe94457": {
+      "published_at": "2026-08-13T04:31:50+00:00",
+      "remote_id": "48772494",
+      "remote_url": "https://www.acfun.cn/v/ac48772494",
+      "source_url": "https://tilvids.com/w/58fYe6MBjaxfeYBzyi4SQF",
+      "title": "Why I Canceled my Framework Pro",
+      "verification": "pending"
     },
     "tilvids:3660be6b-d1f9-4780-abab-249827e61a9d": {
       "published_at": "2026-08-07T05:18:28+00:00",
@@ -271,12 +296,26 @@
       "source_url": "https://news.un.org/zh/story/2026/08/1142615",
       "title": "缅甸：联合国调查人员记录了军方对平民的蓄意袭击"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142616": {
+      "published_at": "2026-08-13T04:34:22+00:00",
+      "remote_id": "48772501",
+      "remote_url": "https://www.acfun.cn/a/ac48772501",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142616",
+      "title": "国际劳工组织：全球青年失业率上升 年轻人获得体面工作的道路愈发艰难"
+    },
     "usgs-quakes:usgs-4.5-week-20260811": {
       "published_at": "2026-08-11T04:48:06+00:00",
       "remote_id": "48766940",
       "remote_url": "https://www.acfun.cn/a/ac48766940",
       "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
       "title": "全球地震观测：过去一周记录到 32 次，最强 M7.4"
+    },
+    "usgs-quakes:usgs-4.5-week-20260813": {
+      "published_at": "2026-08-13T04:34:24+00:00",
+      "remote_id": "48772503",
+      "remote_url": "https://www.acfun.cn/a/ac48772503",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
+      "title": "全球地震观测：过去一周记录到 31 次，最强 M7.4"
     },
     "wikimedia-commons:10703553": {
       "published_at": "2026-08-10T04:25:19+00:00",
@@ -293,6 +332,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-12T04:30:52+00:00",
+  "updated_at": "2026-08-13T04:34:25+00:00",
   "version": 1
 }
