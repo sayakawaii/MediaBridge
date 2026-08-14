@@ -129,7 +129,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48772499",
       "source_url": "https://makertube.net/w/9LY7SCNqFN7Q7coXEXrN9N",
       "title": "Wood Ducks",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-14T04:23:27+00:00"
     },
     "makertube:4b401c5a-e7b2-4960-b01b-5bc9ce3add3e": {
       "published_at": "2026-08-10T04:18:39+00:00",
@@ -168,6 +169,14 @@
       "source_url": "https://makertube.net/w/ofy8hxXr4VD8e5Vqz4Qz2F",
       "title": "Strudel REPL live coding acid techno from scratch"
     },
+    "makertube:f03c5f5e-1cc8-4e9d-81f1-bbe4586527ec": {
+      "published_at": "2026-08-14T04:30:36+00:00",
+      "remote_id": "48775282",
+      "remote_url": "https://www.acfun.cn/v/ac48775282",
+      "source_url": "https://makertube.net/w/vEAdGhRRHi9idfvu5Lsc3u",
+      "title": "Wild Blue Skies - Official Launch Trailer",
+      "verification": "pending"
+    },
     "nasa-news:https://science.nasa.gov/earth/earth-observatory/bountiful-roebuck-bay/": {
       "published_at": "2026-08-11T04:48:10+00:00",
       "remote_id": "48766941",
@@ -188,6 +197,13 @@
       "remote_url": "https://www.acfun.cn/a/ac48772504",
       "source_url": "https://www.nasa.gov/technology/tech-transfer-spinoffs/nasa-data-helps-commercial-space-plan-living-off-our-moon/",
       "title": "NASA Data Helps Commercial Space Plan Living Off Our Moon"
+    },
+    "nasa-news:https://www.nasa.gov/?post_type=image-article&p=1037553": {
+      "published_at": "2026-08-14T04:31:18+00:00",
+      "remote_id": "48775288",
+      "remote_url": "https://www.acfun.cn/a/ac48775288",
+      "source_url": "https://www.nasa.gov/image-article/nasas-737-reveals-new-paint/",
+      "title": "NASA’s 737 Reveals New Paint"
     },
     "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
       "published_at": "2026-08-09T05:12:18+00:00",
@@ -243,7 +259,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48772494",
       "source_url": "https://tilvids.com/w/58fYe6MBjaxfeYBzyi4SQF",
       "title": "Why I Canceled my Framework Pro",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-14T04:23:28+00:00"
     },
     "tilvids:3660be6b-d1f9-4780-abab-249827e61a9d": {
       "published_at": "2026-08-07T05:18:28+00:00",
@@ -260,6 +277,14 @@
       "title": "Linux passes 10% market share? AI hijacking is the new SEO - Linux Weekly News",
       "verification": "ok",
       "verified_at": "2026-08-11T06:10:51+00:00"
+    },
+    "tilvids:54e201fd-0a30-44e1-b3ef-ac7b6e55e1b2": {
+      "published_at": "2026-08-14T04:29:38+00:00",
+      "remote_id": "48775279",
+      "remote_url": "https://www.acfun.cn/v/ac48775279",
+      "source_url": "https://tilvids.com/w/btWqx3butgQA8DEUBprgu7",
+      "title": "12 Awesome  Linux apps you've likely never tried!",
+      "verification": "pending"
     },
     "tilvids:b1652567-6288-45d8-8144-4c859635ad0c": {
       "published_at": "2026-08-08T03:53:42+00:00",
@@ -303,6 +328,13 @@
       "source_url": "https://news.un.org/zh/story/2026/08/1142616",
       "title": "国际劳工组织：全球青年失业率上升 年轻人获得体面工作的道路愈发艰难"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142629": {
+      "published_at": "2026-08-14T04:31:15+00:00",
+      "remote_id": "48775285",
+      "remote_url": "https://www.acfun.cn/a/ac48775285",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142629",
+      "title": "乌克兰：平民伤亡人数创2022年3月以来新高"
+    },
     "usgs-quakes:usgs-4.5-week-20260811": {
       "published_at": "2026-08-11T04:48:06+00:00",
       "remote_id": "48766940",
@@ -316,6 +348,13 @@
       "remote_url": "https://www.acfun.cn/a/ac48772503",
       "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
       "title": "全球地震观测：过去一周记录到 31 次，最强 M7.4"
+    },
+    "usgs-quakes:usgs-4.5-week-20260814": {
+      "published_at": "2026-08-14T04:31:16+00:00",
+      "remote_id": "48775286",
+      "remote_url": "https://www.acfun.cn/a/ac48775286",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
+      "title": "全球地震观测：过去一周记录到 32 次，最强 M7.4"
     },
     "wikimedia-commons:10703553": {
       "published_at": "2026-08-10T04:25:19+00:00",
@@ -332,6 +371,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-13T04:34:25+00:00",
+  "updated_at": "2026-08-14T04:31:18+00:00",
   "version": 1
 }
