@@ -95,6 +95,14 @@
       "source_url": "https://sayakawaii.github.io/Horizon/2026/08/05/summary-zh.html",
       "title": "Horizon 每日简报 2026-08-05"
     },
+    "internet-archive:AllIsWellH264": {
+      "published_at": "2026-08-16T03:34:42+00:00",
+      "remote_id": "48779414",
+      "remote_url": "https://www.acfun.cn/v/ac48779414",
+      "source_url": "https://archive.org/details/AllIsWellH264",
+      "title": "\"All-Is-Well\"",
+      "verification": "pending"
+    },
     "internet-archive:JayCanDoIt": {
       "published_at": "2026-08-09T05:18:52+00:00",
       "remote_id": "48762154",
@@ -155,13 +163,22 @@
       "verification": "ok",
       "verified_at": "2026-08-13T04:26:30+00:00"
     },
+    "makertube:aa849bd9-fd00-4c16-afb6-e2b602f3545b": {
+      "published_at": "2026-08-16T03:28:16+00:00",
+      "remote_id": "48779393",
+      "remote_url": "https://www.acfun.cn/v/ac48779393",
+      "source_url": "https://makertube.net/w/n4gmRkPzszCAJ3HEaptWgn",
+      "title": "music for a clinical, sterile environment #SunVox",
+      "verification": "pending"
+    },
     "makertube:abf12dda-2fd9-4db6-a2a3-4799e183e8e1": {
       "published_at": "2026-08-15T03:46:30+00:00",
       "remote_id": "48777441",
       "remote_url": "https://www.acfun.cn/v/ac48777441",
       "source_url": "https://makertube.net/w/nesW8DzfhNuKLNhQrTqpLv",
       "title": "Da Maker Lounge: Using Open-source AI tech to build a personal/professional website (2026-08-14)",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-16T03:27:24+00:00"
     },
     "makertube:b343abcb-cd0e-46ae-b1c2-496233404a3a": {
       "published_at": "2026-08-08T03:56:13+00:00",
@@ -220,6 +237,13 @@
       "remote_url": "https://www.acfun.cn/a/ac48775288",
       "source_url": "https://www.nasa.gov/image-article/nasas-737-reveals-new-paint/",
       "title": "NASA’s 737 Reveals New Paint"
+    },
+    "nasa-news:https://www.nasa.gov/?post_type=press-release&p=1038032": {
+      "published_at": "2026-08-16T03:35:19+00:00",
+      "remote_id": "48779419",
+      "remote_url": "https://www.acfun.cn/a/ac48779419",
+      "source_url": "https://www.nasa.gov/news-release/nasa-announces-max-power-americas-newest-aerospace-expo-airshow/",
+      "title": "NASA Announces MAX POWER: America’s Newest Aerospace Expo, Airshow"
     },
     "nasa-video:ARTEMIS II Mission Recap_ANB_V3": {
       "published_at": "2026-08-09T05:12:18+00:00",
@@ -303,6 +327,14 @@
       "verification": "ok",
       "verified_at": "2026-08-15T03:13:25+00:00"
     },
+    "tilvids:8f7605c4-0448-4468-a3dc-79240a4d528e": {
+      "published_at": "2026-08-16T03:27:56+00:00",
+      "remote_id": "48779392",
+      "remote_url": "https://www.acfun.cn/v/ac48779392",
+      "source_url": "https://tilvids.com/w/iHtS1EJqV7FBiU3Ye6uMyJ",
+      "title": "take2",
+      "verification": "pending"
+    },
     "tilvids:b1652567-6288-45d8-8144-4c859635ad0c": {
       "published_at": "2026-08-08T03:53:42+00:00",
       "remote_id": "48759687",
@@ -359,6 +391,13 @@
       "source_url": "https://news.un.org/zh/story/2026/08/1142634",
       "title": "世卫组织：过去八年全球发生超过1万起医疗卫生领域袭击事件"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142639": {
+      "published_at": "2026-08-16T03:35:15+00:00",
+      "remote_id": "48779416",
+      "remote_url": "https://www.acfun.cn/a/ac48779416",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142639",
+      "title": "【专题报道┃前方视野】阿富汗：营养不良危机正在失控"
+    },
     "usgs-quakes:usgs-4.5-week-20260811": {
       "published_at": "2026-08-11T04:48:06+00:00",
       "remote_id": "48766940",
@@ -387,6 +426,13 @@
       "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
       "title": "全球地震观测：过去一周记录到 42 次，最强 M7.7"
     },
+    "usgs-quakes:usgs-4.5-week-20260816": {
+      "published_at": "2026-08-16T03:35:18+00:00",
+      "remote_id": "48779417",
+      "remote_url": "https://www.acfun.cn/a/ac48779417",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
+      "title": "全球地震观测：过去一周记录到 49 次，最强 M7.7"
+    },
     "wikimedia-commons:10703553": {
       "published_at": "2026-08-10T04:25:19+00:00",
       "remote_id": "48764120",
@@ -402,6 +448,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-15T03:47:28+00:00",
+  "updated_at": "2026-08-16T03:35:19+00:00",
   "version": 1
 }
