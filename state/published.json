@@ -101,7 +101,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48779414",
       "source_url": "https://archive.org/details/AllIsWellH264",
       "title": "\"All-Is-Well\"",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-17T03:28:06+00:00"
     },
     "internet-archive:JayCanDoIt": {
       "published_at": "2026-08-09T05:18:52+00:00",
@@ -163,13 +164,22 @@
       "verification": "ok",
       "verified_at": "2026-08-13T04:26:30+00:00"
     },
+    "makertube:a9c1f0e7-2d1f-4204-ad0d-f4805c9410a9": {
+      "published_at": "2026-08-17T03:41:58+00:00",
+      "remote_id": "48781505",
+      "remote_url": "https://www.acfun.cn/v/ac48781505",
+      "source_url": "https://makertube.net/w/mXPtQ7jjjuo6egfjFde6Mt",
+      "title": "Tiananmen Square: Unseen footage reveals how the Chinese regime turned to violent repression — @LeMondeInEnglish",
+      "verification": "pending"
+    },
     "makertube:aa849bd9-fd00-4c16-afb6-e2b602f3545b": {
       "published_at": "2026-08-16T03:28:16+00:00",
       "remote_id": "48779393",
       "remote_url": "https://www.acfun.cn/v/ac48779393",
       "source_url": "https://makertube.net/w/n4gmRkPzszCAJ3HEaptWgn",
       "title": "music for a clinical, sterile environment #SunVox",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-17T03:28:07+00:00"
     },
     "makertube:abf12dda-2fd9-4db6-a2a3-4799e183e8e1": {
       "published_at": "2026-08-15T03:46:30+00:00",
@@ -275,6 +285,14 @@
       "verification": "ok",
       "verified_at": "2026-08-11T06:10:51+00:00"
     },
+    "tilvids:09be6d79-ee65-4b1f-97d2-c418e5735b38": {
+      "published_at": "2026-08-17T03:33:12+00:00",
+      "remote_id": "48781471",
+      "remote_url": "https://www.acfun.cn/v/ac48781471",
+      "source_url": "https://tilvids.com/w/2cMBjuHs1zC4NL5ojTaJ5h",
+      "title": "Big changes coming to KDE & GNOME, tons of apps & services getting Linux clients - Linux Weekly News",
+      "verification": "pending"
+    },
     "tilvids:0fe64a99-7de0-4651-a1c1-910d96f1b15f": {
       "published_at": "2026-08-12T04:29:02+00:00",
       "remote_id": "48769767",
@@ -333,7 +351,8 @@
       "remote_url": "https://www.acfun.cn/v/ac48779392",
       "source_url": "https://tilvids.com/w/iHtS1EJqV7FBiU3Ye6uMyJ",
       "title": "take2",
-      "verification": "pending"
+      "verification": "ok",
+      "verified_at": "2026-08-17T03:28:08+00:00"
     },
     "tilvids:b1652567-6288-45d8-8144-4c859635ad0c": {
       "published_at": "2026-08-08T03:53:42+00:00",
@@ -391,6 +410,13 @@
       "source_url": "https://news.un.org/zh/story/2026/08/1142634",
       "title": "世卫组织：过去八年全球发生超过1万起医疗卫生领域袭击事件"
     },
+    "un-news-zh:https://news.un.org/zh/story/2026/08/1142637": {
+      "published_at": "2026-08-17T03:44:45+00:00",
+      "remote_id": "48781515",
+      "remote_url": "https://www.acfun.cn/a/ac48781515",
+      "source_url": "https://news.un.org/zh/story/2026/08/1142637",
+      "title": "【世界进行时】2026年8月14日"
+    },
     "un-news-zh:https://news.un.org/zh/story/2026/08/1142639": {
       "published_at": "2026-08-16T03:35:15+00:00",
       "remote_id": "48779416",
@@ -433,6 +459,13 @@
       "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
       "title": "全球地震观测：过去一周记录到 49 次，最强 M7.7"
     },
+    "usgs-quakes:usgs-4.5-week-20260817": {
+      "published_at": "2026-08-17T03:44:46+00:00",
+      "remote_id": "48781516",
+      "remote_url": "https://www.acfun.cn/a/ac48781516",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/map/?extent=4.5",
+      "title": "全球地震观测：过去一周记录到 56 次，最强 M7.7"
+    },
     "wikimedia-commons:10703553": {
       "published_at": "2026-08-10T04:25:19+00:00",
       "remote_id": "48764120",
@@ -448,6 +481,6 @@
       "title": "NASA Spacecraft Reveals Recent Geological Activity on the Moon"
     }
   },
-  "updated_at": "2026-08-16T03:35:19+00:00",
+  "updated_at": "2026-08-17T03:44:46+00:00",
   "version": 1
 }
