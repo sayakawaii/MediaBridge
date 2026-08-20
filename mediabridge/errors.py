@@ -43,6 +43,22 @@ class PublishError(MediaBridgeError):
     """The upstream platform rejected the submission."""
 
 
+class AccountBlockedError(PublishError):
+    """AcFun is refusing submissions from this account, whatever the item.
+
+    Distinct from `AuthError`: the session is perfectly valid -- ``login-check``
+    passes and returns a uid -- but every submission endpoint answers
+    ``result=109020``. Trying the next item cannot help, so this aborts the run
+    instead of grinding through every source to collect the same refusal.
+    """
+
+    hint = (
+        "The session is valid, so a new cookie will not help. Sign in to AcFun "
+        "and try submitting something by hand: if that is refused too, the "
+        "account itself is restricted and only AcFun can lift it."
+    )
+
+
 class SkipItem(MediaBridgeError):
     """Not an error: the item is deliberately not published this run.
 

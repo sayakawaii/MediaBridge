@@ -10,7 +10,14 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .config import Config, SourceConfig
-from .errors import FetchError, MediaBridgeError, PublishError, SkipItem, SourceError
+from .errors import (
+    AccountBlockedError,
+    FetchError,
+    MediaBridgeError,
+    PublishError,
+    SkipItem,
+    SourceError,
+)
 from .fetchers.base import fetch
 from .filters import limits as limit_filter
 from .models import FetchedMedia, MediaItem
@@ -73,18 +80,28 @@ class RunReport:
     one red for something already handled.
     """
 
+    aborted: str = ""
+    """Why the run stopped early, if it did.
+
+    Set when the platform refuses submissions account-wide, which no later item
+    can get around.
+    """
+
     @property
     def exit_code(self) -> int:
         # A run that publishes nothing is normal (everything already seen);
         # only genuine failures should fail the workflow.
-        return 1 if self.failed else 0
+        return 1 if self.failed or self.aborted else 0
 
     def summary(self) -> str:
-        return (
+        summary = (
             f"discovered={self.discovered} published={self.published} "
             f"duplicate={self.skipped_duplicate} filtered={self.skipped_filtered} "
             f"failed={self.failed} verified={self.verified}"
         )
+        if self.aborted:
+            summary += f" aborted={self.aborted!r}"
+        return summary
 
 
 class Orchestrator:
@@ -132,8 +149,18 @@ class Orchestrator:
 
             remaining = self._remaining_for(target, budget, spent_per_target)
             published_before = self.report.published
-            self._run_source(source_config, work_root, remaining)
-            spent_per_target[target] += self.report.published - published_before
+            try:
+                self._run_source(source_config, work_root, remaining)
+            except AccountBlockedError as exc:
+                # Every remaining source would collect the same refusal, and
+                # video sources would pay for a download first. Stop here so the
+                # daily run costs seconds and says exactly one thing.
+                log.error("AcFun is refusing submissions from this account: %s", exc)
+                log.error("  hint: %s", exc.hint)
+                self.report.aborted = str(exc)
+                break
+            finally:
+                spent_per_target[target] += self.report.published - published_before
 
         if self.state.save():
             log.info("State written to %s", self.config.state_file)
@@ -397,6 +424,10 @@ class Orchestrator:
             log.info("[%s] skipping %r: %s", source_config.name, item.title, exc)
             self.report.skipped_filtered += 1
             return False
+        except AccountBlockedError:
+            # Not this item's fault, so it is not counted as a failure and its
+            # dedup key stays free; `run` turns this into an early stop.
+            raise
         except (FetchError, PublishError, MediaBridgeError) as exc:
             log.error("[%s] failed on %r: %s", source_config.name, item.title, exc)
             if getattr(exc, "hint", ""):

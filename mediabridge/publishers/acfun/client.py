@@ -19,7 +19,7 @@ from typing import Any
 
 import requests
 
-from ...errors import AuthError, PublishError
+from ...errors import AccountBlockedError, AuthError, PublishError
 from ...utils.http import build_session
 from .auth import AcFunCredentials
 
@@ -31,6 +31,32 @@ POST_ARTICLE_REFERER = f"{MEMBER_BASE}/post-article"
 
 #: Fallback chunked-upload host, used when the token response omits one.
 DEFAULT_UPLOAD_HOST = "upload.kuaishouzt.com"
+
+#: "抱歉，系统正在升级维护，该账号暂时无法投稿". Despite the wording it is scoped to
+#: the account, not the platform, and it answers every submission endpoint --
+#: ``postArticle`` and ``getKSCloudToken`` alike -- while the session stays
+#: valid. Worth its own exception because no other item will fare better.
+ACCOUNT_BLOCKED_RESULT = 109020
+
+
+def _envelope_error(payload: Any) -> tuple[int, str] | None:
+    """Return ``(result, message)`` if `payload` carries a rejection.
+
+    Two shapes are in play: most endpoints answer with ``result`` at the top
+    level, but ``getKSCloudToken`` nests the same fields under ``errMsg``, which
+    used to slip past this check and surface downstream as a missing token.
+    """
+    if not isinstance(payload, dict):
+        return None
+
+    envelope = payload
+    if isinstance(payload.get("errMsg"), dict):
+        envelope = payload["errMsg"]
+
+    result = envelope.get("result")
+    if not isinstance(result, int) or result == 0:
+        return None
+    return result, str(envelope.get("error_msg") or envelope.get("errorMsg") or "")
 
 
 class AcFunClient:
@@ -101,11 +127,14 @@ class AcFunClient:
                 f"AcFun returned non-JSON for {path} (HTTP {response.status_code}): {response.text[:200]}"
             ) from exc
 
-        if expect_envelope and isinstance(payload, dict) and payload.get("result") not in (0, None):
-            raise PublishError(
-                f"AcFun rejected {path}: result={payload.get('result')} "
-                f"{payload.get('error_msg') or payload.get('errorMsg') or ''}".strip()
-            )
+        if expect_envelope:
+            error = _envelope_error(payload)
+            if error:
+                result, message = error
+                description = f"AcFun rejected {path}: result={result} {message}".strip()
+                if result == ACCOUNT_BLOCKED_RESULT:
+                    raise AccountBlockedError(description)
+                raise PublishError(description)
         return payload
 
     def post_form(

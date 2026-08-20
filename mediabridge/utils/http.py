@@ -11,6 +11,11 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
 
+#: Wikimedia's User-Agent policy asks automated clients to identify themselves
+#: and throttles those that do not. Only for third-party media downloads: AcFun's
+#: upload gateway answers anything non-browser with an empty 200.
+FETCH_USER_AGENT = "MediaBridge/0.1 (https://github.com/sayakawaii/MediaBridge; automated repost tool)"
+
 
 def build_session(
     *,

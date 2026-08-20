@@ -17,7 +17,7 @@ import requests
 from ..config import LimitsConfig
 from ..errors import FetchError, SkipItem
 from ..models import FetchedMedia, MediaItem
-from ..utils.http import build_session
+from ..utils.http import FETCH_USER_AGENT, build_session
 from ..utils.media import ensure_uploadable, normalise_cover
 from ..utils.text import safe_filename
 
@@ -52,6 +52,13 @@ def download_to(
 
     try:
         with session.get(url, stream=True, timeout=timeout) as response:
+            # The session already retries 429 with backoff, so one that survives
+            # to here is sustained throttling of the runner's IP rather than a
+            # blip -- Wikimedia does this to cloud ranges. Nothing is wrong with
+            # the item, so leave its dedup key free and let a later run have it
+            # instead of failing the whole scheduled job over it.
+            if response.status_code == 429:
+                raise SkipItem(f"Upstream is rate-limiting us (HTTP 429): {url}")
             response.raise_for_status()
 
             declared = response.headers.get("content-length")
@@ -91,7 +98,7 @@ def fetch_direct(item: MediaItem, work_dir: Path, limits: LimitsConfig) -> Fetch
     if not item.download_url:
         raise FetchError(f"Source '{item.source_name}' produced no download_url for {item.webpage_url}")
 
-    session = build_session()
+    session = build_session(user_agent=FETCH_USER_AGENT)
     max_bytes = int(limits.max_filesize_mb) * 1048576 if limits.max_filesize_mb else None
 
     stem = work_dir / safe_filename(item.title, fallback="media")

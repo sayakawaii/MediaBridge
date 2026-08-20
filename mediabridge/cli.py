@@ -209,9 +209,16 @@ def _write_job_summary(report) -> None:
     if not summary_path:
         return
 
-    lines = [
-        "## MediaBridge run",
-        "",
+    lines = ["## MediaBridge run", ""]
+    if report.aborted:
+        lines += [
+            "> **Stopped early: AcFun is refusing submissions from this account.**",
+            f"> `{report.aborted}`",
+            ">",
+            "> The session is still valid, so replacing the cookie will not help.",
+            "",
+        ]
+    lines += [
         f"- discovered: {report.discovered}",
         f"- published: {report.published}",
         f"- duplicates skipped: {report.skipped_duplicate}",
